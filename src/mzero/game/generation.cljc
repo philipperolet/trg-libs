@@ -242,9 +242,8 @@
   it is coerced to be evaluated while in the binding
   context). Checking games are `enjoyable?` is optional and not
   default because enjoyable-game detection can take a very long time."
-  ([nb-states board-size seed enjoyable?]
-   (let [level {::density-map {:fruit 15}}
-         generate-game-state
+  ([nb-states board-size seed enjoyable? level]
+   (let [generate-game-state
          (fn [new-seed]
            (binding [g/*rnd* (java.util.Random. new-seed)]
              (if enjoyable?
@@ -254,10 +253,11 @@
          (binding [g/*rnd* (if seed (java.util.Random. seed) (java.util.Random.))]
            (vec (repeatedly nb-states g/int)))]
      (pmap generate-game-state seeds-list)))
-  
+  ([nb-states board-size seed enjoyable?]
+   (generate-game-states nb-states board-size seed enjoyable? {::density-map {:fruit 15}}))
   ([nb-states board-size seed]
    (generate-game-states nb-states board-size seed false))
   
   ([nb-states board-size]
-   (generate-game-states nb-states board-size nil false)))
+   (generate-game-states nb-states board-size nil)))
 
