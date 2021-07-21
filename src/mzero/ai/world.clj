@@ -121,6 +121,6 @@
 
 (defn world
   "Get a world given board `size`, and `seed`"
-  [size seed]
+  [size seed & args]
   (new-world
-   (first (gg/generate-game-states 1 size seed))))
+   (first (apply gg/generate-game-states 1 size seed args))))
