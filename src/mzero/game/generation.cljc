@@ -243,7 +243,7 @@
   context). Checking games are `enjoyable?` is optional and not
   default because enjoyable-game detection can take a very long time."
   ([nb-states board-size seed enjoyable?]
-   (let [level {::density-map {:fruit 5}}
+   (let [level {::density-map {:fruit 15}}
          generate-game-state
          (fn [new-seed]
            (binding [g/*rnd* (java.util.Random. new-seed)]
