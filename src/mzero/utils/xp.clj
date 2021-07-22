@@ -37,6 +37,15 @@ Results of %s: (%d measures)
 - sum %,4G
 ")
 
+(defn stats
+  "Given list of measures, return map of stats"
+  [measures]
+  {:mean (mean measures)
+   :std (std measures)
+   :confidence (confidence measures)
+   :sum (double (reduce + measures))
+   :nb (count measures)})
+
 (defn stats-string
   "Generate a string with usual stats given a set of `measures`"
   [title measures]
