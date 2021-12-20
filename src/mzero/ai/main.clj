@@ -31,23 +31,15 @@
    ["-i" "--interactive"
     "Run the game in interactive mode (see README.md)"]
    ["-n" "--number-of-steps STEPS"
-    "Number of steps that the game should run. If not specified, the
-    game runs until it ends. In non-interactive mode, execution
-    terminates after STEPS steps. If in interactive mode, user is
-    asked for action after STEPS steps."
+    "Number of steps that the game should run. If not specified, the game runs until it ends. In non-interactive mode, execution terminates after STEPS steps. If in interactive mode, user is asked for action after STEPS steps."
     :parse-fn #(Integer/parseInt %)]
    ["-l" "--logging-steps STEPS"
-    "Log the world state every STEPS steps. Only used in
-    *non*-interactive mode. 0 means no logging during game."
+    "Log the world state every STEPS steps. Only used in *non*-interactive mode. 0 means no logging during game."
     :default 0
     :parse-fn #(Integer/parseInt %)
     :validate [int?]]
    ["-t" "--player-type PLAYER-TYPE"
-    "Artificial player that will play the game. Arg should be the
-    namespace in which the protocol is implemented, unqualified (it
-    will be prefixed with mzero.ai.players). E.g. \"random\" will
-    target the RandomPlayer protocol implementation in
-    mzero.ai.players.random (it's a player moving at random)."
+    "Artificial player that will play the game. Arg should be the namespace in which the protocol is implemented, unqualified (it will be prefixed with mzero.ai.players). E.g. \"random\" will target the RandomPlayer protocol implementation in mzero.ai.players.random (it's a player moving at random)."
     :default "random"]
    ["-o" "--player-opts PLAYER-OPTIONS"
     "Map of player options, specific to each player type."
@@ -60,8 +52,7 @@
     :parse-fn read-string
     :validate [#(s/valid? ::gg/level %)]]
    ["-r" "--game-runner GAME-RUNNER"
-    "Game runner function to use. ATTOW, ClockedThreadsRunner,
-    MonoThreadRunner or WatcherRunner (which breaks for board sizes > 10)"
+    "Game runner function to use. ATTOW, MonoThreadRunner, ClockedThreadsRunner or WatcherRunner (the latter breaks for board sizes > 10)"
     :default gr/->MonoThreadRunner
     :parse-fn parse-game-runner
     :validate [#(some? %)]]
@@ -71,16 +62,18 @@
     :parse-fn #(java.util.logging.Level/parse %)
     :validate [#(some? %)]]
    ["-g" "--game-step-duration GST"
-    "Time finterval (ms) between each game step, used only by
-    ClockedThreadsRunner"
+    "Time finterval (ms) between each game step, used only by ClockedThreadsRunner"
     :default 5
     :parse-fn #(Integer/parseInt %)]
    ["-p" "--player-step-duration PST"
-    "Time interval (ms) between each move request from player, used
-    only by ClockedThreadsRunner"
+    "Time interval (ms) between each move request from player, used only by ClockedThreadsRunner"
     :default 5
     :parse-fn #(Integer/parseInt %)]
-   ["-h" "--help"]])
+   ["-h" "--help"]
+   ["-S" "--seed INT"
+    "Random seed used to generate the game board. Change it to get a different board"
+    :default 0
+    :parse-fn #(Integer/parseInt %)]])
 
 (defn- arg-array-from-string
   "Convenience function to get the args array from an arg string"
@@ -96,10 +89,16 @@
   (let [parsed-data
         (-> (apply arg-array-from-string arg-string format-vars)
             (ctc/parse-opts cli-options))]
-    (if (some? (parsed-data :errors))
+    (cond
+      (:errors parsed-data)
       (throw (java.lang.IllegalArgumentException.
               (str "There were error(s) in arg-string parsing.\n"
                    (str/join "\n" (parsed-data :errors)))))
+      
+      (-> parsed-data :options :help)
+      (assoc (:options parsed-data) :summary (:summary parsed-data))
+      
+      :else
       (:options parsed-data))))
 
 ;;; Interactive mode setup
@@ -164,15 +163,21 @@
   ([opts]
    (run opts
      (aiw/get-initial-world-state
-      (gg/create-nice-game (opts :board-size) (opts :level))))))
+      (gg/create-nice-game (opts :board-size) (opts :level) (opts :seed))))))
 
 (defn -main [& args]
   (let [opts (parse-run-args (str/join " " args))]
-    (if (some? (-> opts :help))
+    (if (-> opts :help)
       (println (opts :summary))
       (run opts))))
 
-(def curr-game (atom {:player nil :world nil :opts nil}))
+;; Tools for easily running games in the REPL
+;;;;
+
+
+(def curr-game
+  "Current state, allowing step-by-step execution in REPL"
+  (atom {:player nil :world nil :opts nil}))
 
 (defn go [str-args & inits]
   (let [opts (parse-run-args str-args)]
@@ -185,7 +190,11 @@
            #(-> (run opts (:world %) (:player %))
                 (assoc :opts opts)))))
 
-(defn gon [& args]
+(defn gon
+  "(gon args-string) ;; run a game with a string of standard command-line args
+  (gon n) ;; run n steps of the current game (unless already finished)
+  (gon) ;; run 1 step of the current game"
+  [& args]
   (cond
     (empty? args)
     (do (n) nil)
