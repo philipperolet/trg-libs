@@ -4,10 +4,11 @@
                        [clojure.test.check.properties]])
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
-            [clojure.data.generators :as g]
             [mzero.game.board :as gb]
             [mzero.game.state :as gs]
-            [mzero.game.events :as ge]))
+            [mzero.game.events :as ge]
+            #?(:clj [clojure.data.generators :as g]
+                :cljs [mzero.utils.cdg :as g])))
 
 ;; Wall generation
 ;;;;;;;;
