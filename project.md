@@ -1,4 +1,4 @@
-# Supertoto
+- also test with m00 on mzero and hand with gui
 
 
 # Micro-todo

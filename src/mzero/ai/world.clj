@@ -24,7 +24,7 @@
 ;; timestamp in ms of current step start
 (s/def ::step-timestamp nat-int?)
 
-(s/def ::requested-movements (s/map-of ::ge/being ::ge/direction))
+(s/def ::requested-movements ::ge/movements-map)
 
 (defn- world-state-predicate-matcher
   "Generator helper to match ::world-state constraints"
@@ -98,9 +98,7 @@
   game. Executes movements until none is left or game is over."
   [{:as world-state, :keys [::requested-movements]}]
   (-> world-state
-      (update ::gs/game-state
-              (partial u/reduce-until #(not= (::gs/status %) :active) ge/move-being)
-              requested-movements)
+      (update ::gs/game-state ge/game-step requested-movements)
       (assoc ::requested-movements {})
       (update ::game-step inc)))
 

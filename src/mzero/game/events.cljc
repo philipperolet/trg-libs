@@ -7,7 +7,8 @@
   (:require [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
             [mzero.game.board :as gb]
-            [mzero.game.state :as gs]))
+            [mzero.game.state :as gs]
+            [mzero.utils.commons :as c]))
 
 ;;; Movement on board
 ;;;;;;;
@@ -19,6 +20,8 @@
                      :enemy (s/int-in 0 10)))
 
 (s/def ::movement (s/tuple ::being ::direction))
+
+(s/def ::movements-map (s/map-of ::being ::direction))
 
 (s/fdef move-position
   :args (s/cat :position ::gb/position
@@ -140,9 +143,9 @@
   :ret ::gs/game-state)
                
 (defn move-enemy-random
+  "Moves the enemy randomly, favoring directions towards the player"
   [{:as state, :keys [::gs/enemy-positions ::gs/player-position ::gb/game-board]}
    enemy-index]
-  "Moves the enemy randomly, favoring directions towards the player"
   (let [distances
         (vec (map #(compute-distance %1 %2 (count game-board))
                   player-position
@@ -157,7 +160,25 @@
     (move-enemy state random-direction enemy-index)))
               
 (defn move-player-path
-  [state directions]
   "Moves player repeatedly on the given collection of directions"
+  [state directions]
   (reduce move-player state directions))
 
+(s/fdef game-step
+  :args (-> (s/cat :game-state ::gs/game-state
+                   :requested-movements ::movements-map)
+            (s/and (fn [{:keys [game-state requested-movements]}]
+                     (comment "Enemies requesting movements exist on the board")
+                     (let [enemies-nb (count (-> game-state ::gs/enemy-positions))]
+                       (every? #(or (= :player %) (< % enemies-nb))
+                               (keys requested-movements))))))
+  :ret ::gs/game-state)
+
+(defn game-step
+  "Execute a game step given `requested-movements`. Return the updated
+  `game-state`"
+  [game-state requested-movements]
+  (c/reduce-until #(not= (::gs/status %) :active)
+                  move-being
+                  game-state
+                  requested-movements))
