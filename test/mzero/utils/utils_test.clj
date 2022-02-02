@@ -64,22 +64,6 @@
   (is (not (u/almost= 0.00000001 0)))
   (is (not (u/almost= 0 0.00000001))))
 
-(deftest reduce-until-test
-  (is (= (u/reduce-until #(< 8 %) + (range 10))
-         10))
-
-  (is (= (u/reduce-until #(< 100 %) + (range 10))
-         45))
-
-  (is (= (u/reduce-until #(< 8 %) + 11 (range 10))
-         11))
-
-  (is (= (u/reduce-until #(< 100 %) + 90 (range 10))
-         105))
-
-  (is (= (u/reduce-until #(< 100 %) + 11 (range 10))
-         56)))
-
 (deftest timed-test
   (is (u/almost= (first (u/timed (Thread/sleep 10))) 10 0.5))
   (is (not (u/almost= (first (u/timed (Thread/sleep 10))) 10 0.00001)))
