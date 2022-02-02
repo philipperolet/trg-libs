@@ -253,7 +253,8 @@
          seeds-list
          (binding [g/*rnd* (if seed (java.util.Random. seed) (java.util.Random.))]
            (vec (repeatedly nb-states g/int)))]
-     (pmap generate-game-state seeds-list)))
+     (#?(:clj pmap
+         :cljs map) generate-game-state seeds-list)))
   ([nb-states board-size seed enjoyable?]
    (generate-game-states nb-states board-size seed enjoyable? {::density-map {:fruit 15}}))
   ([nb-states board-size seed]
