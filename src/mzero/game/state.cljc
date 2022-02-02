@@ -20,7 +20,7 @@
 
 (s/def ::enemy-positions (s/coll-of ::gb/position :kind vector? :max-count max-enemies))
 
-(s/def ::score nat-int?)
+(s/def ::score int?)
 
 (defonce game-statuses #{:initial :active :over :won})
 
@@ -47,7 +47,10 @@
                          #(gen/vector (gen/vector (gen/choose 0 (dec size)) 2) %))
       ::status (random-status-generator board)))))
 
-(s/def ::game-state
+;; Transient game state : possible state in-between steps, but not fully consistent
+;;   (e.g. players can be on cheese or on enemies)
+;; Game state : consistent state, with all gaming logic enforced
+(s/def ::transient-game-state
   (-> (s/keys :req [::gb/game-board
                     ::player-position
                     ::score
@@ -60,29 +63,29 @@
           #(and (< (% 0) (count game-board))
                 (< (% 1) (count game-board)))
           (conj enemy-positions player-position)))
-               
-         (fn [s] (comment "player should be on empty space")
-           (= (-> s ::gb/game-board (get-in (::player-position s))) :empty))
-
-         (fn [{:keys [::gb/game-board ::enemy-positions]}]
+       (fn [{:keys [::gb/game-board ::enemy-positions]}]
            (comment "enemies should not be on a wall")
-           (every? #(not= (get-in game-board %) :wall) enemy-positions))
+           (every? #(not= (get-in game-board %) :wall) enemy-positions)))))
 
-         (fn [{:keys [::player-position ::enemy-positions ::status]}]
-           (comment "Game over if player and enemy on same position,
+
+(s/def ::game-state
+  (-> ::transient-game-state
+      (s/and
+       (fn [s] (comment "player should be on empty space")
+           (= (-> s ::gb/game-board (get-in (::player-position s))) :empty))
+       (fn [{:keys [::player-position ::enemy-positions ::status]}]
+         (comment "Game over if player and enemy on same position,
            except if game is won")
-           (or (= status :over)
-               (= status :won)
-               (every? #(not= % player-position) enemy-positions)))
-         
-         (fn [{:keys [::gb/game-board ::status]}]
-           (comment "Game is won if and only if no fruits are left.")
-           (or (and (= (gb/count-cells game-board :fruit) 0)
-                    (= status :won))
-               (and (> (gb/count-cells game-board :fruit) 0)
-                    (not= status :won)))))
-
-       (s/with-gen #(gen/bind gb/test-board-size-generator game-state-generator))))
+         (or (= status :over)
+             (= status :won)
+             (every? #(not= % player-position) enemy-positions)))
+       (fn [{:keys [::gb/game-board ::status]}]
+         (comment "Game is won if and only if no fruits are left.")
+         (or (and (= (gb/count-cells game-board :fruit) 0)
+                  (= status :won))
+             (and (> (gb/count-cells game-board :fruit) 0)
+                  (not= status :won)))))
+      (s/with-gen #(gen/bind gb/test-board-size-generator game-state-generator))))
 
 (s/def ::enemy-nb (s/int-in 0 max-enemies))
 

@@ -39,20 +39,22 @@
                   (assoc ::ctr/missteps 0)))
         opts (parse-run-args "-p 50 -g 50 -r ClockedThreadsRunner -v WARNING")]
     (testing "When running a step takes less time to run than game
-    step duration, it waits for the remaining time (at ~3ms resolution)"
+    step duration, it waits for the remaining time (at ~5ms
+    resolution). NOTE: once in a while this test fails, should not
+    happen too often though."
       (let [player-state (atom (aip/load-player "random" nil nil))
             _ (aip/request-movement player-state world-state)
             start-time (System/currentTimeMillis)]
         (ctr/run-timed-step world-state opts)
         (is (u/almost= (opts :game-step-duration)
                        (- (System/currentTimeMillis) start-time)
-                       4))
+                       6))
         
         (aip/request-movement player-state world-state)
         (ctr/run-timed-step world-state opts)
         (is (u/almost= (* 2 (opts :game-step-duration))
                        (- (System/currentTimeMillis) start-time)        
-                       6))
+                       11))
         
         (dotimes [_ 5]
           ;; since player & game are not in

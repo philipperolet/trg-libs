@@ -14,6 +14,7 @@
    [:empty :empty :fruit :cheese :empty]])
 
 (deftest board-stats-test
+  :unstrumented
   (testing "Board stats work"
     (let [{:keys [density total-cells non-wall-cells]} (gb/board-stats small-test-board)]
       (is (= 25 total-cells))

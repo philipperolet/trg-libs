@@ -72,7 +72,12 @@
                    :n pos-int?)
             (s/and (fn [args]
                      (comment "At least n+2 empty cells so 2 empty cells remain")
-                     (>= (gb/count-cells (:board args) :empty) (+ 2 (:n args))))))
+                     (>= (gb/count-cells (:board args) :empty) (+ 2 (:n args))))
+                   (fn [{:keys [board element n]}]
+                     (comment "Not too much walls otherwise does not fit board specs")
+                     (or (not= element :wall)
+                         (< (+ (gb/count-cells board :wall) n)
+                            (* (count board) (count board) gb/max-wall-density))))))
   :ret ::gb/game-board
   :fn (fn [{:keys [ret] {:keys [board element n]} :args}]
         (comment "Exactly n more element")

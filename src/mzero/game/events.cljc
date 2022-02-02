@@ -41,87 +41,42 @@
            :down [(move-inc x) y]
            :left [x (move-dec y)]))))
 
-(s/fdef move-player
-  :args (-> (s/cat :state ::gs/game-state :direction ::direction)
-            (s/and #(= (-> % :state ::gs/status) :active)))
-  :ret ::gs/game-state)
-
-(defn- game-over [state new-position]
-  (-> state 
-      (assoc ::gs/player-position new-position) 
-      (assoc-in (into [::gb/game-board] new-position) :empty)
-      (assoc ::gs/status :over)))
-
-(defn move-player
-  "Moves player according to provided direction on given state: returns
-  state with updated player-position and board."
-  [{:as state, :keys [::gb/game-board ::gs/player-position ::gs/enemy-positions]}
-   direction]
-  (let [new-position (move-position player-position direction (count game-board))]
-    (if (some #{new-position} enemy-positions) ;; game over if moves on enemy
-      (game-over state new-position)
-
-      ;; depending on where player wants to move
-      (case (get-in game-board new-position) 
-        :wall state ;; move fails
-      
-        :empty (assoc state ::gs/player-position new-position) ;; move occurs
-      
-        :fruit (-> state ;; move occurs and score increases, possibly winning
-                   (assoc ::gs/player-position new-position)
-                   (update ::gs/score inc)
-                   (assoc-in (into [::gb/game-board] new-position) :empty)
-                   (#(if (= (gb/count-cells (% ::gb/game-board) :fruit) 0)
-                       (assoc % ::gs/status :won) %)))
-      
-        :cheese (game-over state new-position))))) ;; game over
-
-(defonce move-enemy-args-generator
+(defonce move-being-args-generator
   (gen/bind (s/gen ::gs/game-state)
             #(gen/tuple (gen/return (assoc % ::gs/status :active))
-                        (s/gen ::direction)
-                        (gen/choose 0 (-> % ::gs/enemy-positions count)))))
+                        (gen/one-of [(gen/return :player) (gen/choose 0 (-> % ::gs/enemy-positions count))])
+                        (s/gen ::direction))))
 
-(s/fdef move-enemy
-  :args (-> (s/cat :state ::gs/game-state
-                   :direction ::direction
-                   :enemy-index ::gs/enemy-nb)
-            (s/and #(< (:enemy-index %) (-> % :state ::gs/enemy-positions count))
-                   #(= (-> % :state ::gs/status) :active))
-            (s/with-gen (fn [] move-enemy-args-generator)))
-  :ret ::gs/game-state)
+(s/fdef move-being
+  :args (-> (s/cat :state ::gs/transient-game-state
+                   :being ::being
+                   :direction ::direction)
+            (s/and
+             (fn [{:keys [state being]}]
+               (comment "Enemy to move actually exists")
+               (or (= (first being) :player)
+                   (< (second being) (-> state ::gs/enemy-positions count))))
+             #(= (-> % :state ::gs/status) :active))
+            (s/with-gen (fn [] move-being-args-generator)))
+  :ret ::gs/transient-game-state)
 
-(defn move-enemy
-  "Moves player according to provided direction on given state: returns
+(defn move-being
+  "Move `being` according to provided `direction` on given `state`. Return
   state with updated enemy position and board."
-  [{:as state, :keys [::gb/game-board ::gs/player-position ::gs/enemy-positions]}
-   direction
-   enemy-index]
-  (let [enemy-position (enemy-positions enemy-index)
-        new-position (move-position enemy-position direction (count game-board))]
-    (cond ;; depending on where enemy wants to move    
-      ;; game over if moves on player
-      (= new-position player-position) 
-      (do (assoc-in state [::gs/enemy-positions enemy-index] new-position)
-          (game-over state new-position))
-      
+  [{:keys [::gb/game-board ::gs/player-position ::gs/enemy-positions] :as state}
+   being direction]
+  (let [being-update-index
+        (if (= :player being) [::gs/player-position] [::gs/enemy-positions being])
+        being-position
+        (if (= :player being) player-position (enemy-positions being))
+        new-position (move-position being-position direction (count game-board))]
+    (cond 
       ;; move fails on wall
       (= :wall (get-in game-board new-position))
       state 
 
-      (= 1 1) ;; move occurs
-      (assoc-in state [::gs/enemy-positions enemy-index] new-position))))
-
-;; no spec for move-being since specs of move-player / move-enemy are already there
-(defn move-being
-  "Moves being according to provided movement (being type + direction)
-  on given state: returns updated game state"
-  [{:keys [::gb/game-board ::gs/player-position ::gs/enemy-positions], :as state}
-   [being direction, :as movement]]
-  (if (= being :player)
-    (move-player state direction)
-    (move-enemy state direction being)))
-  
+      :else ;; move occurs
+      (assoc-in state being-update-index new-position))))
 
 (defn compute-distance [x y size]
   (let [diff (- x y)]
@@ -138,9 +93,10 @@
                    :enemy-index ::gs/enemy-nb)
             (s/and #(< (:enemy-index %) (-> % :state ::gs/enemy-positions count))
                    #(= (-> % :state ::gs/status) :active))
-            (s/with-gen (fn [] (gen/fmap #(vector (% 0) (% 2))
-                                         move-enemy-args-generator))))
-  :ret ::gs/game-state)
+            (s/with-gen
+              (fn [] (gen/fmap #(vector (first %) (let [val (second %)] (if (= val :player) 0 val)))
+                               move-being-args-generator))))
+  :ret ::gs/transient-game-state)
                
 (defn move-enemy-random
   "Moves the enemy randomly, favoring directions towards the player"
@@ -157,12 +113,79 @@
         final-favor (if (< distance 4) (into total-favor total-favor) total-favor)
         random-direction
         (rand-nth (into total-favor [:up :down :left :right]))]
-    (move-enemy state random-direction enemy-index)))
+    (move-being state enemy-index random-direction)))
               
 (defn move-player-path
   "Moves player repeatedly on the given collection of directions"
   [state directions]
-  (reduce move-player state directions))
+  (reduce #(move-being %1 :player %2) state directions))
+
+(defn- move-everybody
+  [game-state requested-movements]
+  (reduce #(move-being %1 (first %2) (second %2)) game-state requested-movements))
+
+(defn- player-on?
+  ([element player-position game-board]
+   (= element (get-in game-board player-position)))
+  ([element {:keys [::gs/player-position ::gb/game-board]}]
+   (player-on? element player-position game-board)))
+
+(defn- enemy-encountered-index?
+  "Return the index of the enemy encountered, or nil if no enemies encountered."
+  [{:as game-state :keys [::gs/player-position ::gs/enemy-positions]}]
+  (let [enemy-index (.indexOf enemy-positions player-position)]
+    (if (= -1 enemy-index) nil enemy-index)))
+
+(defn- update-score
+  [game-state]
+  (update game-state ::gs/score
+          #(cond-> %
+             (player-on? :fruit game-state) inc
+             (player-on? :cheese game-state) (- 100)
+             (enemy-encountered-index? game-state) (- 100)
+             :else identity)))
+
+(defn- reset-enemy-position
+  "After having struck the player, an enemy reappears at a large
+  distance from the player"
+  [enemy-position game-board]
+  (let [board-size (count game-board)
+        new-pos-on-axis
+        (fn [pos]
+          (-> (+ pos (/ board-size 2))
+              int
+              (mod board-size)))
+        new-position (mapv new-pos-on-axis enemy-position)]
+    (gb/find-in-board game-board #{:empty :cheese :fruit} new-position)))
+
+(defn- update-status [{:as game-state :keys [::gs/score ::gb/game-board]}]
+  (assoc game-state ::gs/status 
+         (cond
+           (and (player-on? :fruit game-state)
+                (= 1 (gb/count-cells game-board :fruit)))
+           :won ;; last fruit to be eaten
+
+           (neg? score) :over
+           :else :active)))
+
+(defn- clean-board
+  [{:as game-state :keys [::gs/player-position ::gb/game-board]}]
+  (let [enemy-encountered-index (enemy-encountered-index? game-state)]
+    (cond-> game-state
+      (or (player-on? :fruit game-state) (player-on? :cheese game-state))
+      (assoc-in (into [::gb/game-board] player-position) :empty)
+
+      enemy-encountered-index
+      (update-in [::gs/enemy-positions enemy-encountered-index]
+                 reset-enemy-position game-board))))
+
+(defn- fit-game-state-and-movements
+  [[game-state movements]]
+  (let [max-index (dec (count (-> game-state ::gs/enemy-positions)))
+        updated-movements
+        (select-keys movements
+                     (remove #(and (number? %) (> % max-index)) (keys movements)))]
+    [game-state updated-movements]))
 
 (s/fdef game-step
   :args (-> (s/cat :game-state ::gs/game-state
@@ -171,14 +194,21 @@
                      (comment "Enemies requesting movements exist on the board")
                      (let [enemies-nb (count (-> game-state ::gs/enemy-positions))]
                        (every? #(or (= :player %) (< % enemies-nb))
-                               (keys requested-movements))))))
+                               (keys requested-movements))))
+                   (fn [{:keys [game-state]}]
+                     (= :active (-> game-state ::gs/status))))
+            (s/with-gen
+              (fn []
+                (gen/fmap fit-game-state-and-movements
+                          (gen/tuple (s/gen ::gs/game-state) (s/gen ::movements-map))))))
   :ret ::gs/game-state)
 
 (defn game-step
   "Execute a game step given `requested-movements`. Return the updated
   `game-state`"
   [game-state requested-movements]
-  (c/reduce-until #(not= (::gs/status %) :active)
-                  move-being
-                  game-state
-                  requested-movements))
+  (-> game-state
+      (move-everybody requested-movements)
+      update-score
+      update-status
+      clean-board))

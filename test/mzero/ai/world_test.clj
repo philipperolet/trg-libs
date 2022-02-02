@@ -35,7 +35,8 @@
   
   (testing "Game lost or won during step should not err even when
         some movements remain"
-    (let [world-state (assoc world-state ::gs/game-state gst/test-state-2)]
+    (let [game-state (assoc gst/test-state-2 ::gs/score 0)
+          world-state (assoc world-state ::gs/game-state game-state)]
       (is (= (-> world-state
                  (assoc ::aiw/requested-movements {0 :up 1 :down :player :left})
                  (aiw/compute-new-state)

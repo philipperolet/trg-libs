@@ -122,7 +122,7 @@
     1/ ERROR: recursivity in tree-simulate should not throw
     stackoverflow even big boards
 
-    2/ FAILURE: it should more than 75Kops/secs, on big boards.
+    2/ FAILURE: it should more than 60Kops/secs, on big boards.
     An op is ~ a call to tree-simulate. Also, at least 1000 sims per secs."
     (with-redefs [sut/tree-simulate (count-calls sut/tree-simulate)]
       (let [expected-sims-per-sec 1000
@@ -145,7 +145,7 @@
         (is (not (nil? game-result)) (str "time > than " time-to-run-ms))
         (let [nb-ops ((:call-count (meta sut/tree-simulate)))
               time-in-s (/ (first game-result) 1000)]
-          (is (> (/ nb-ops time-in-s) 75000)
+          (is (> (/ nb-ops time-in-s) 58000)
               (str "Nb of steps " nb-ops " in time " time-in-s)))))))
 
 (deftest ^:integration proper-random-seeding

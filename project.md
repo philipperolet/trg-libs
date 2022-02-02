@@ -1,5 +1,20 @@
-- also test with m00 on mzero and hand with gui
++ impl clean-board
+  - move-being calls (incl. UI & m00)
+	- and redo tests
+  - move-player calls 
+  - move-enemy calls
 
+- attention: redéployer toutes dépendances post refacto
+  - move-being calls (incl. UI & m00)
+	- and redo tests
+  - move-player calls 
+  - move-enemy calls
+
+
+- score value can be float
+- change to add score formulas for each situation
+- also test with m00 on mzero and hand with gui
+- game step : should we reset it after level up? no. 
 
 # Micro-todo
 + valider rmr avec initialisation & 2 layers fonctionne, en live

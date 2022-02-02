@@ -33,6 +33,13 @@
 (def test-board-generator
   (gen/bind test-board-size-generator game-board-generator))
 
+(defn count-cells
+  "Number of cells with given value on given board"
+  [board value]
+  (->> board (reduce into) (filter #(= % value)) count))
+
+(def max-wall-density 0.66)
+
 (s/def ::game-board
   (-> (s/every ::game-line
                :kind vector?
@@ -45,7 +52,10 @@
                ;; counts cells without using  the funcion count-cells
                ;; to avoid cyclic reference since count-cells spec
                ;; relies on ::game-board
-               (< 1 (->> gb (reduce into) (filter #(= % :empty)) count))))
+               (< 1 (->> gb (reduce into) (filter #(= % :empty)) count)))
+             (fn [gb]
+               (comment "Avoid weird boards full of walls")
+               (< (count-cells gb :wall) (* (count gb) (count gb) max-wall-density))))
       
       (s/with-gen (fn [] test-board-generator))))
 
@@ -58,11 +68,6 @@
   :ret nat-int?
   :fn (fn [s] (comment "Less than the total number of cells")
         (<= (:ret s) (reduce * (repeat 2 (-> s :args :board count))))))
-
-(defn count-cells
-  "Number of cells with given value on given board"
-  [board value]
-  (->> board (reduce into) (filter #(= % value)) count))
 
 (s/fdef empty-board
   :args (-> (s/cat :size ::board-size)

@@ -14,7 +14,8 @@
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
             [clojure.tools.logging :as log]
-            [mzero.game.generation :as gg]))
+            [mzero.game.generation :as gg]
+            [mzero.game.board :as gb]))
 
 ;;; Full game state spec & helpers
 ;;;;;;;
@@ -83,7 +84,8 @@
 ;;;;;;
 
 (s/fdef compute-new-state
-  :args (s/cat :world-state ::world-state)
+  :args (-> (s/cat :world-state ::world-state)
+            (s/and (fn [{:keys [world-state]}] (active? world-state))))
   :ret ::world-state
   :fn (s/and
        (fn [{{:keys [world-state]} :args, :keys [ret]}]

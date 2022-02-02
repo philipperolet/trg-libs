@@ -137,7 +137,7 @@
               min-child-value-plus1
               #(inc (apply min (map ::value (vals (children %)))))
               next-state
-              (let [ns (ge/move-player game-state next-direction)]
+              (let [ns (ge/game-step game-state {:player next-direction})]
                 (cond-> ns
                   (< (::gs/score game-state) (::gs/score ns))
                   (assoc ::gs/score Integer/MAX_VALUE)
@@ -184,7 +184,8 @@
   `seed` allows for repeatability"
   [this world seed direction]
   (binding [g/*rnd* (java.util.Random. seed)]
-    (let [state-at-direction (ge/move-player (::gs/game-state world) direction)]
+    (let [state-at-direction
+          (ge/game-step (::gs/game-state world) {:player direction})]
       (cond
         ;; if moving to this direction gets a fruit
         (< (::gs/score (::gs/game-state world)) (::gs/score state-at-direction))
