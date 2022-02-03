@@ -7,6 +7,7 @@
             [mzero.game.board :as gb]
             [mzero.game.state :as gs]
             [mzero.game.events :as ge]
+            [mzero.utils.commons :as c]
             #?(:clj [clojure.data.generators :as g]
                 :cljs [mzero.utils.cdg :as g])))
 
@@ -219,7 +220,7 @@
 
   Non-nil `seed` allows for repeatable randomness."
   ([size level seed]
-   (binding [g/*rnd* (if seed (java.util.Random. seed) g/*rnd*)]
+   (binding [g/*rnd* (c/get-rng seed)]
      (let [nb-of-walls (int (/ (* size (level ::wall-density 50)) 100))]
        (-> (gb/empty-board size)
            (as-> board (iterate add-random-wall board))
@@ -251,12 +252,12 @@
   ([nb-states board-size seed enjoyable? level]
    (let [generate-game-state
          (fn [new-seed]
-           (binding [g/*rnd* (java.util.Random. new-seed)]
+           (binding [g/*rnd* (c/get-rng new-seed)]
              (if enjoyable?
                (create-nice-game board-size level)
                (gs/init-game-state (create-nice-board board-size level) 0))))
          seeds-list
-         (binding [g/*rnd* (if seed (java.util.Random. seed) (java.util.Random.))]
+         (binding [g/*rnd* (c/get-rng seed)]
            (vec (repeatedly nb-states g/int)))]
      (#?(:clj pmap
          :cljs map) generate-game-state seeds-list)))

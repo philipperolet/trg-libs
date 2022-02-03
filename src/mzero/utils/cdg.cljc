@@ -15,4 +15,5 @@
 (defn shuffle [coll] (clojure.core/shuffle coll))
 
 (defn int []
-  (* (rand-int Integer/MAX_VALUE) (if (< 0.5 (rand)) -1 1)))
+  (* (rand-int #?(:clj Integer/MAX_VALUE :cljs (.-MAX_SAFE_INTEGER js/Number)))
+     (if (< 0.5 (rand)) -1 1)))

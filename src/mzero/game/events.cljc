@@ -130,12 +130,19 @@
   ([element {:keys [::gs/player-position ::gb/game-board]}]
    (player-on? element player-position game-board)))
 
-(defn- enemy-encountered-index?
+
+(defn- cljs-enemy-encountered-index?
+  [{:as game-state :keys [::gs/player-position ::gs/enemy-positions]}]
+  (first (keep-indexed #(when (= player-position %2) %1) enemy-positions)))
+
+(defn- clj-enemy-encountered-index?
   "Return the index of the enemy encountered, or nil if no enemies encountered."
   [{:as game-state :keys [::gs/player-position ::gs/enemy-positions]}]
   (let [enemy-index (.indexOf enemy-positions player-position)]
     (if (= -1 enemy-index) nil enemy-index)))
 
+(def enemy-encountered-index? #?(:clj clj-enemy-encountered-index?
+                                 :cljs cljs-enemy-encountered-index?))
 (defn- update-score
   [game-state]
   (update game-state ::gs/score
