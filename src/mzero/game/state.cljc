@@ -20,7 +20,7 @@
 
 (s/def ::enemy-positions (s/coll-of ::gb/position :kind vector? :max-count max-enemies))
 
-(s/def ::score int?)
+(s/def ::score number?)
 
 (defonce game-statuses #{:initial :active :over :won})
 
@@ -130,7 +130,7 @@
   [board enemy-nb]
   (let [size (count board)
         starting-position (gb/find-in-board board #{:empty} (->> size (* 0.5) int (vector 5)))]
-    {::score 0
+    {::score 0.0
      ::status :initial
      ::enemy-positions (add-enemy-positions enemy-nb board starting-position)
      ::player-position starting-position
