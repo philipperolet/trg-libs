@@ -75,16 +75,6 @@
                       0.0001)))
   (is (= (second (u/timed (* 3 3))) 9)))
 
-(deftest filter-keys-test
-  (is (= (u/filter-keys #(>= % 3) {1 :a 2 :b 3 :c 4 :d}) {3 :c 4 :d}))
-  (is (= (u/filter-keys #(= 2 (count %)) {"a" 1 "bc" 2 "cde" 3}) {"bc" 2}))
-  (is (= (u/filter-keys #(int? %) {:a 2 :b 3}) {})))
-
-(deftest filter-vals-test
-  (is (= (u/filter-vals #{1 2} {:a 1 :b 3 :d 0}) {:a 1}))
-  (is (= (u/filter-vals #(< 2 %) {:a 1 :b 3 :d 0 :c 5}) {:b 3 :c 5}))
-  (is (= (u/filter-vals some? {:a nil :b nil :d 0}) {:d 0})))
-
 (deftest map-map-test
   (is (= {:a 6 :b 4} (u/map-map #(* % 2) {:a 3 :b 2}))))
 

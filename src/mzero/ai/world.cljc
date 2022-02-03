@@ -10,12 +10,11 @@
   a detailed execution history."
   (:require [mzero.game.events :as ge]
             [mzero.game.state :as gs]
-            [mzero.utils.utils :as u]
+            [mzero.utils.commons :as c]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
             [clojure.tools.logging :as log]
-            [mzero.game.generation :as gg]
-            [mzero.game.board :as gb]))
+            [mzero.game.generation :as gg]))
 
 ;;; Full game state spec & helpers
 ;;;;;;;
@@ -32,7 +31,7 @@
   [world-state]
   (-> world-state
       (assoc ::requested-movements
-             (u/filter-keys
+             (c/filter-keys
               #(or (= % :player)
                    (< % (count (get-in world-state
                                        [::gs/game-state ::gs/enemy-positions]))))
@@ -77,7 +76,7 @@
     ::game-step 0
     ::requested-movements {}
     ::step-timestamp initial-timestamp})
-  ([game-state] (new-world game-state (System/currentTimeMillis))))
+  ([game-state] (new-world game-state (c/currTimeMillis))))
 
 (def ^:deprecated get-initial-world-state new-world)
 ;;; Game execution
@@ -108,7 +107,7 @@
   "Runs a step of the world."
   [world-state-atom logging-steps]
   (swap! world-state-atom
-         (comp #(assoc % ::step-timestamp (System/currentTimeMillis))
+         (comp #(assoc % ::step-timestamp (c/currTimeMillis))
                compute-new-state))
 
   ;; Log every logging-steps steps, or never if 0

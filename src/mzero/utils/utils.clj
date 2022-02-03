@@ -60,17 +60,6 @@
          result# ~expr]
      [(/ (- (System/nanoTime) start-time#) 1000000.0) result#]))
 
-(defn filter-keys
-  "Like select-keys, with a predicate on the keys"
-  [pred map_]
-  (select-keys map_ (filter pred (keys map_))))
-
-
-(defn filter-vals
-  "Like filter-keys, except on vals"
-  [pred map_]
-  (select-keys map_ (filter #(pred (map_ %)) (keys map_))))
-
 (defn remove-common-beginning
   "Checks if seq1 and seq2 begin with a common subsequence, and returns
   the remainder of seq1--that is, seq1 stripped of the common
