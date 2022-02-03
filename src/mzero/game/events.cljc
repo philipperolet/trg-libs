@@ -96,7 +96,7 @@
             (s/with-gen
               (fn [] (gen/fmap #(vector (first %) (let [val (second %)] (if (= val :player) 0 val)))
                                move-being-args-generator))))
-  :ret ::gs/transient-game-state)
+  :ret ::direction)
                
 (defn move-enemy-random
   "Moves the enemy randomly, favoring directions towards the player"
@@ -112,8 +112,8 @@
         total-favor (into vertical-favor horizontal-favor)
         final-favor (if (< distance 4) (into total-favor total-favor) total-favor)
         random-direction
-        (rand-nth (into total-favor [:up :down :left :right]))]
-    (move-being state enemy-index random-direction)))
+        (rand-nth (into final-favor [:up :down :left :right]))]
+    random-direction))
               
 (defn move-player-path
   "Moves player repeatedly on the given collection of directions"
