@@ -25,3 +25,11 @@
 (defn currTimeMillis []
   #?(:clj (System/currentTimeMillis)
      :cljs (. (js/Date.) (getTime))))
+
+(defn get-rng
+  "Used to generate a seeded RNG to bind with g/*rnd*, and ignored for CLJS"
+  [seed]
+  #?(:clj (if seed
+            (java.util.Random. seed) (java.util.Random.))
+     :cljs (js/console.warn "Call to get-rng with seed not implemented
+     in javscript. Continuing with unseeded random")))
