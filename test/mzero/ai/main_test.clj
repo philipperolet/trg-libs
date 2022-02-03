@@ -5,7 +5,8 @@
             [mzero.game.state :as gs]
             [mzero.game.state-test :as gst]
             [mzero.utils.testing :refer [deftest]]
-            [clojure.test :refer [is testing]]))
+            [clojure.test :refer [is testing]]
+            [mzero.game.generation :as gg]))
 
 (deftest parse-run-args-err-test
   (testing "should throw when an arg isn't valid"
@@ -55,3 +56,16 @@
       (is (= (-> game-result :world ::aiw/game-step) 15)))))
 
 
+(deftest run-multilevel-world
+  (testing "Random player on multilevel small world should get all the
+  points and finish the game"
+    (let [levels (repeat 3 {::gg/density-map {:fruit 5}})
+          test-world (aiw/multilevel-world 12 26 levels)
+          end-world-state
+          (:world (aim/run (aim/parse-run-args "-t random") test-world))]
+      (is (= 2 (-> test-world ::aiw/next-levels count)))
+      (is (== 15
+             (-> end-world-state ::aiw/recorded-score)
+             (-> end-world-state ::gs/game-state ::gs/score)))
+      (is (= :won (-> end-world-state ::gs/game-state ::gs/status)))
+      (is (= 0 (-> end-world-state ::aiw/next-levels count))))))

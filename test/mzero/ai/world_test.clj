@@ -27,6 +27,7 @@
                (dissoc ::aiw/missteps ::aiw/step-timestamp ::aiw/time-to-wait))
            {::aiw/requested-movements {}
             ::aiw/game-step 2
+            ::aiw/recorded-score 0
             ::gs/game-state (-> test-state
                                 (assoc-in [::gb/game-board 1 1] :empty)
                                 (assoc ::gs/player-position [2 1])

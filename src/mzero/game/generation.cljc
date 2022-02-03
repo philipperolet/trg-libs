@@ -186,6 +186,8 @@
         wall-length (int (/ (reduce + rand-lengths) 5))]
     (add-wall board (generate-wall board-size wall-length))))
 
+(def max-levels 100)
+
 (s/def ::level (s/keys
                 :req [::density-map]
                 :opt [::wall-density]

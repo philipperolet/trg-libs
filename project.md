@@ -1,18 +1,9 @@
-+ impl clean-board
-
-- attention: redéployer toutes dépendances post refacto
-  - move-being calls (incl. UI & m00)
-	- and redo tests
-  - move-player calls 
-  - move-enemy calls
-
-
-- score value can be float
+- test game runs with multilevel worlds
+- final score must be stored in world, and updated on over / won
+- update ux to handle new level transition, new score, multilev worl
 
 - change to add score formulas for each situation
-- also test with m00 on mzero and hand with gui
-- accélérer game-step
-- game step : should we reset it after level up? no. 
+- move status to world
 
 # Micro-todo
 + valider rmr avec initialisation & 2 layers fonctionne, en live

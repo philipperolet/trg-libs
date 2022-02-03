@@ -14,6 +14,8 @@
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
             #?(:clj [clojure.tools.logging :as log])
+            #?(:clj [clojure.data.generators :as g]
+                :cljs [mzero.utils.cdg :as g])
             [mzero.game.generation :as gg]))
 
 ;;; Full game state spec & helpers
@@ -25,6 +27,12 @@
 (s/def ::step-timestamp nat-int?)
 
 (s/def ::requested-movements ::ge/movements-map)
+
+(s/def ::recorded-score ::gs/score)
+
+(s/def ::next-levels (s/every ::gs/game-state
+                              :max-count gg/max-levels
+                              :gen #(gen/vector (s/gen ::gs/game-state) 0 2)))
 
 (defn- world-state-predicate-matcher
   "Generator helper to match ::world-state constraints"
@@ -41,7 +49,9 @@
   (s/keys :req [::gs/game-state
                 ::game-step
                 ::requested-movements
-                ::step-timestamp]))
+                ::step-timestamp]          
+          :opt [::next-levels
+                ::recorded-score]))
 
 (s/def ::world-state
   (-> world-state-keys-spec
@@ -74,6 +84,7 @@
   ([game-state initial-timestamp]
    {::gs/game-state (assoc game-state ::gs/status :active)
     ::game-step 0
+    ::recorded-score 0
     ::requested-movements {}
     ::step-timestamp initial-timestamp})
   ([game-state] (new-world game-state (c/currTimeMillis))))
@@ -94,6 +105,17 @@
          (comment "Movements cleared")
          (empty? (::requested-movements ret)))))
 
+(defn- update-if-next-level
+  [{:as world :keys [::gs/game-state ::next-levels]}]
+  (cond-> world
+    (-> game-state ::gs/status (= :won))
+    (assoc ::recorded-score (-> game-state ::gs/score))
+    (and (-> game-state ::gs/status (= :won)) (seq next-levels))
+    (assoc ::gs/game-state (assoc (first next-levels)
+                                  ::gs/status :active
+                                  ::gs/score (-> game-state ::gs/score))
+           ::next-levels (rest next-levels))))
+
 (defn compute-new-state
   "Computes the new state derived from running a step of the
   game. Executes movements until none is left or game is over."
@@ -101,7 +123,8 @@
   (-> world-state
       (update ::gs/game-state ge/game-step requested-movements)
       (assoc ::requested-movements {})
-      (update ::game-step inc)))
+      (update ::game-step inc)
+      update-if-next-level))
 
 (defn run-step
   "Runs a step of the world."
@@ -125,3 +148,13 @@
   [size seed & args]
   (new-world
    (first (apply gg/generate-game-states 1 size seed args))))
+
+(defn multilevel-world
+  [size seed [level & levels]]
+  (let [seeds
+        (binding [g/*rnd* (c/get-rng seed)]
+          (vec (repeatedly (count levels) g/int)))
+        generate-level
+        (fn [s l] (first (gg/generate-game-states 1 size s true l)))]
+    (-> (world size seed true level)
+        (assoc ::next-levels (map generate-level seeds levels)))))
