@@ -13,7 +13,7 @@
             [mzero.utils.commons :as c]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
-            [clojure.tools.logging :as log]
+            #?(:clj [clojure.tools.logging :as log])
             [mzero.game.generation :as gg]))
 
 ;;; Full game state spec & helpers
@@ -113,10 +113,12 @@
   ;; Log every logging-steps steps, or never if 0
   (when (and (pos? logging-steps)
              (zero? (mod (@world-state-atom ::game-step) logging-steps)))
-    (log/warnf "Step %s, timestamp %d"
-               (@world-state-atom ::game-step)
-               (::step-timestamp @world-state-atom))
-    (log/info (data->string @world-state-atom))))
+    (#?(:clj log/warnf :cljs (constantly nil))
+     "Step %s, timestamp %d"
+     (@world-state-atom ::game-step)
+     (::step-timestamp @world-state-atom))
+    (#?(:clj log/warnf :cljs (constantly nil))
+     (data->string @world-state-atom))))
 
 (defn world
   "Get a world given board `size`, and `seed`"
