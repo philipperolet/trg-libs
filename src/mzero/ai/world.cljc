@@ -116,19 +116,22 @@
                                   ::gs/score (-> game-state ::gs/score))
            ::next-levels (rest next-levels))))
 
+(defn update-score-given-status
+  [{:as world :keys [::gs/game-state ::recorded-score]}]
+  (case (-> world ::gs/game-state ::gs/status)
+    :won (assoc world ::recorded-score (-> game-state ::gs/score))
+    :over (assoc-in world [::gs/game-state ::gs/score] recorded-score)
+    world))
+
 (defn compute-new-state
   "Compute the new state derived from running a step of the
   game."
   [{:as world-state, :keys [::requested-movements]}]
-  (letfn [(save-score-if-level-won [world]
-            (if (-> world ::gs/game-state ::gs/status (= :won))
-              (assoc world ::recorded-score (-> world ::gs/game-state ::gs/score))
-              world))]
-    (-> world-state
-        (update ::gs/game-state ge/game-step requested-movements)
-        (assoc ::requested-movements {})
-        (update ::game-step inc)
-        save-score-if-level-won)))
+  (-> world-state
+      (update ::gs/game-state ge/game-step requested-movements)
+      (assoc ::requested-movements {})
+      (update ::game-step inc)
+      update-score-given-status))
 
 (defn run-step
   "Runs a step of the world."

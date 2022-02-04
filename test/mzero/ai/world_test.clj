@@ -37,27 +37,28 @@
   (testing "Game lost or won during step should not err even when
         some movements remain"
     (let [game-state (assoc gst/test-state-2 ::gs/score 0.0)
-          world-state (assoc world-state ::gs/game-state game-state)]
-      (is (= (-> world-state
-                 (assoc ::aiw/requested-movements {0 :up 1 :down :player :left})
-                 (aiw/compute-new-state)
-                 (get-in [::gs/game-state ::gs/status]))
-             :won))
-      
-      (is (= (-> world-state
-                 (assoc ::aiw/requested-movements {:player :left 0 :up 1 :down})
-                 (aiw/compute-new-state)
-                 (get-in [::gs/game-state ::gs/status]))
-             :won))
-
-      (is (= (-> world-state
-                 (assoc ::aiw/requested-movements {:player :right 1 :left 0 :up})
-                 (aiw/compute-new-state)
-                 (get-in [::gs/game-state ::gs/status]))
-             :over))
-
-      (is (= (-> world-state
-                 (assoc ::aiw/requested-movements {1 :left 0 :up :player :right})
-                 (aiw/compute-new-state)
-                 (get-in [::gs/game-state ::gs/status]))
-             :over)))))
+          world-state (assoc world-state ::gs/game-state game-state)
+          winning-state-1
+          (-> world-state
+              (assoc ::aiw/requested-movements {0 :up 1 :down :player :left})
+              (aiw/compute-new-state))
+          winning-state-2
+          (-> world-state
+              (assoc ::aiw/requested-movements {:player :left 0 :up 1 :down})
+              (aiw/compute-new-state))
+          losing-state-1
+          (-> world-state
+              (assoc ::aiw/requested-movements {:player :right 1 :left 0 :up})
+              (aiw/compute-new-state))
+          losing-state-2
+          (-> world-state
+              (assoc ::aiw/requested-movements {1 :left 0 :up :player :right})
+              (aiw/compute-new-state))]
+      (is (= (-> winning-state-1 ::gs/game-state ::gs/status) :won))
+      (is (== (-> winning-state-1 ::aiw/recorded-score) 1))
+      (is (= (-> winning-state-2 ::gs/game-state ::gs/status) :won))
+      (is (== (-> winning-state-2 ::aiw/recorded-score) 1))
+      (is (= (-> losing-state-1 ::gs/game-state ::gs/status) :over))
+      (is (== (-> losing-state-1 ::gs/game-state ::gs/score) 0))
+      (is (= (-> losing-state-2 ::gs/game-state ::gs/status) :over))
+      (is (== (-> losing-state-2 ::gs/game-state ::gs/score) 0)))))
