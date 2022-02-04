@@ -21,7 +21,8 @@
   is not empty, `game-state` has *not* been updated with those
   movements."
   (:require [mzero.ai.player :as aip]
-            [mzero.ai.world :as aiw]))
+            [mzero.ai.world :as aiw]
+            [mzero.game.state :as gs]))
 
 (defprotocol GameRunner
   (run-game [runner]))
@@ -45,12 +46,16 @@
   #(when-let [steps-to-do (opts :number-of-steps)]
      (+ (-> world ::aiw/game-step) steps-to-do (- (-> % ::aiw/game-step)))))
 
+(defn move-to-next-level-if-needed [world-atom]
+  (swap! world-atom aiw/update-to-next-level))
+
 (defrecord MonoThreadRunner [world-state player-state opts]
   GameRunner
   (run-game [{:keys [world-state player-state opts]}]
     (loop [nb-steps (when-let [s (opts :number-of-steps)] (dec s))] 
       (aip/request-movement player-state world-state)
       (aiw/run-step world-state (opts :logging-steps))
+      (move-to-next-level-if-needed world-state)
       (when-let [game-status (game-should-continue @world-state nb-steps)]
         (case game-status
           :until-end (recur nil) ;; nil means never stop running
@@ -68,7 +73,8 @@
        (fn [_ _ _ new-st]
          (when (game-should-continue new-st (remaining-steps new-st))
            (if (-> new-st ::aiw/requested-movements :player)
-             (aiw/run-step world-state (opts :logging-steps))
+             (do (aiw/run-step world-state (opts :logging-steps))
+                 (move-to-next-level-if-needed world-state))
              (aip/request-movement player-state world-state)))))
       
       ;; if nothing moves during 1 ms, e.g. because the player

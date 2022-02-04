@@ -1,9 +1,3 @@
-- test game runs with multilevel worlds
-- final score must be stored in world, and updated on over / won
-- update ux to handle new level transition, new score, multilev worl
-
-- change to add score formulas for each situation
-- move status to world
 
 # Micro-todo
 + valider rmr avec initialisation & 2 layers fonctionne, en live

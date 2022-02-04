@@ -105,26 +105,30 @@
          (comment "Movements cleared")
          (empty? (::requested-movements ret)))))
 
-(defn- update-if-next-level
+(defn remaining-levels? [world] (seq (-> world ::next-levels)))
+
+(defn update-to-next-level
   [{:as world :keys [::gs/game-state ::next-levels]}]
   (cond-> world
-    (-> game-state ::gs/status (= :won))
-    (assoc ::recorded-score (-> game-state ::gs/score))
-    (and (-> game-state ::gs/status (= :won)) (seq next-levels))
+    (and (= (-> game-state ::gs/status) :won) (remaining-levels? world))
     (assoc ::gs/game-state (assoc (first next-levels)
                                   ::gs/status :active
                                   ::gs/score (-> game-state ::gs/score))
            ::next-levels (rest next-levels))))
 
 (defn compute-new-state
-  "Computes the new state derived from running a step of the
-  game. Executes movements until none is left or game is over."
+  "Compute the new state derived from running a step of the
+  game."
   [{:as world-state, :keys [::requested-movements]}]
-  (-> world-state
-      (update ::gs/game-state ge/game-step requested-movements)
-      (assoc ::requested-movements {})
-      (update ::game-step inc)
-      update-if-next-level))
+  (letfn [(save-score-if-level-won [world]
+            (if (-> world ::gs/game-state ::gs/status (= :won))
+              (assoc world ::recorded-score (-> world ::gs/game-state ::gs/score))
+              world))]
+    (-> world-state
+        (update ::gs/game-state ge/game-step requested-movements)
+        (assoc ::requested-movements {})
+        (update ::game-step inc)
+        save-score-if-level-won)))
 
 (defn run-step
   "Runs a step of the world."

@@ -100,6 +100,6 @@
       (is (every? #(= % :fruit) (subvec fruit-row 3 7)))
       (is (every? #(= % :empty) (subvec fruit-row 7)))
       (is (every? #(= % :empty) (subvec fruit-row 0 3)))
-      (is (= 6 (fruits-eaten-state ::gs/score))))))
+      (is (== 6 (fruits-eaten-state ::gs/score))))))
 
     

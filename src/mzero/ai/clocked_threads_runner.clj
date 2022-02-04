@@ -48,7 +48,8 @@
   [world-state game-options]
   (let [remaining-steps (gr/remaining-steps-fn @world-state game-options)]
     (while (gr/game-should-continue @world-state (remaining-steps @world-state))
-      (run-timed-step world-state game-options))
+      (run-timed-step world-state game-options)
+      (gr/move-to-next-level-if-needed world-state))
     @world-state))
 
 (defn- run-player
