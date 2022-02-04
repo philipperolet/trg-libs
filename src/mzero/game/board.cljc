@@ -138,7 +138,8 @@
                   (list (get-in (-> % :args :board) (:ret %))))))
 
 (defn find-in-board
-  "Finds the closest cell in board whose value is in cell-set,
+  "Finds the closest cell in board whose value matches `cell-set`
+  (e.g. #{:empty :fruit}),
   traversing the board from the given position (defaults to [0 0]),
   line by line. Returns nil if no result."
   ([board cell-set position]
@@ -147,6 +148,24 @@
         (fn [ind line] ;; gets the first matching position in this line
           (->> line
                (keep-indexed #(when (cell-set %2) %1))
+               (#(get-closest % (position 1)))
+               (#(when % (vector ind %))))))
+       (#(get-closest % first (position 0)))))
+  
+  ([board cell-set]
+   (find-in-board board cell-set [0 0])))
+
+(defn find-in-board-indexed
+  "Finds the closest cell in board whose value matches `pred`
+  taking 2 args pos-index and pos-val,
+  traversing the board from the given position (defaults to [0 0]),
+  line by line. Returns nil if no result."
+  ([board pred position]
+   (->> board
+       (keep-indexed
+        (fn [ind line] ;; gets the first matching position in this line
+          (->> line
+               (keep-indexed #(when (pred [ind %1] %2) %1))
                (#(get-closest % (position 1)))
                (#(when % (vector ind %))))))
        (#(get-closest % first (position 0)))))

@@ -116,11 +116,16 @@
                         [middle-size (+ 2 middle-size)]
                         [(+ 2 middle-size) middle-size]
                         [0 0]
-                        [(dec size) (dec size)]]]
+                        [(dec size) (dec size)]]
+        at-least-3-moves-from-player?
+        (fn [position]
+          (> (apply + (map #(mod (- %1 %2) size) position starting-position)) 2))
+        good-position?
+        #(and (at-least-3-moves-from-player? %1)
+              (contains? #{:empty :cheese :fruit} %2))]
     (->> base-positions
-        (map #(gb/find-in-board board #{:empty} %))
-        (keep #(if (not= starting-position %) %))
-        (cycle)
+        (map #(gb/find-in-board-indexed board good-position? %))
+        cycle
         (take enemy-nb)
         vec)))
 
