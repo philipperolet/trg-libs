@@ -7,8 +7,7 @@
   (:require [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
             [mzero.game.board :as gb]
-            [mzero.game.state :as gs]
-            [mzero.utils.commons :as c]))
+            [mzero.game.state :as gs]))
 
 ;;; Movement on board
 ;;;;;;;
@@ -130,7 +129,6 @@
   ([element {:keys [::gs/player-position ::gb/game-board]}]
    (player-on? element player-position game-board)))
 
-
 (defn- cljs-enemy-encountered-index?
   [{:as game-state :keys [::gs/player-position ::gs/enemy-positions]}]
   (first (keep-indexed #(when (= player-position %2) %1) enemy-positions)))
@@ -148,9 +146,9 @@
   (update game-state ::gs/score
           #(cond-> %
              (player-on? :fruit game-state) inc
-             (player-on? :cheese game-state) (- 100)
-             (enemy-encountered-index? game-state) (- 100)
-             :else identity)))
+             (player-on? :cheese game-state) (- 10)
+             (enemy-encountered-index? game-state) (- 10)
+             :else (- 0.005))))
 
 (defn- reset-enemy-position
   "After having struck the player, an enemy reappears at a large
