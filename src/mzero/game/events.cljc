@@ -141,6 +141,11 @@
 
 (def enemy-encountered-index? #?(:clj clj-enemy-encountered-index?
                                  :cljs cljs-enemy-encountered-index?))
+
+(defn- level-finished? [{:as game-state :keys [::gb/game-board]}]
+  (and (player-on? :fruit game-state)
+       (= 1 (gb/count-cells game-board :fruit)))) ;; last fruit to be eaten
+
 (defn- update-score
   [game-state]
   (update game-state ::gs/score
@@ -148,7 +153,8 @@
              (player-on? :fruit game-state) inc
              (player-on? :cheese game-state) (- 10)
              (enemy-encountered-index? game-state) (- 10)
-             :else (- 0.005))))
+             (level-finished? game-state) (+ 20)
+             (pos? (-> game-state ::gs/score)) (- 0.005))))
 
 (defn- reset-enemy-position
   "After having struck the player, an enemy reappears at a large
@@ -166,9 +172,8 @@
 (defn- update-status [{:as game-state :keys [::gs/score ::gb/game-board]}]
   (assoc game-state ::gs/status 
          (cond
-           (and (player-on? :fruit game-state)
-                (= 1 (gb/count-cells game-board :fruit)))
-           :won ;; last fruit to be eaten
+           (level-finished? game-state)
+           :won
 
            (neg? score) :over
            :else :active)))
