@@ -153,8 +153,7 @@
              (player-on? :fruit game-state) inc
              (player-on? :cheese game-state) (- 10)
              (enemy-encountered-index? game-state) (- 10)
-             (level-finished? game-state) (+ 20)
-             (pos? (-> game-state ::gs/score)) (- 0.005))))
+             (level-finished? game-state) (+ 20))))
 
 (defn- reset-enemy-position
   "After having struck the player, an enemy reappears at a large
