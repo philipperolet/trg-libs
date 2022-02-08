@@ -29,8 +29,6 @@
 
 (s/def ::requested-movements ::ge/movements-map)
 
-(s/def ::recorded-score ::gs/score)
-
 (s/def ::next-levels (s/every ::gs/game-state
                               :max-count gg/max-levels
                               :gen #(gen/vector (s/gen ::gs/game-state) 0 2)))
@@ -51,8 +49,7 @@
                 ::game-step
                 ::requested-movements
                 ::step-timestamp]          
-          :opt [::next-levels
-                ::recorded-score]))
+          :opt [::next-levels]))
 
 (s/def ::world-state
   (-> world-state-keys-spec
@@ -85,7 +82,6 @@
   ([game-state initial-timestamp]
    {::gs/game-state (assoc game-state ::gs/status :active)
     ::game-step 0
-    ::recorded-score 0
     ::requested-movements {}
     ::step-timestamp initial-timestamp})
   ([game-state] (new-world game-state (c/currTimeMillis))))
@@ -124,19 +120,10 @@
            ::next-levels (rest next-levels))))
 
 (defn update-score-given-status
-  [{:as world :keys [::recorded-score]}]
-  (let [record-score
-        #(assoc % ::recorded-score (-> % ::gs/game-state ::gs/score))]
-    (case (-> world ::gs/game-state ::gs/status)
-      :won
-      (-> world
-          (update-in [::gs/game-state ::gs/score] + (level-finished-bonus world))
-          record-score)
-
-      :over
-      (assoc-in world [::gs/game-state ::gs/score] recorded-score)
-
-      world)))
+  [world]
+  (if (= (-> world ::gs/game-state ::gs/status) :won)
+    (update-in world [::gs/game-state ::gs/score] + (level-finished-bonus world))
+    world))
 
 (defn compute-new-state
   "Compute the new state derived from running a step of the
