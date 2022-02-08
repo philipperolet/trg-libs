@@ -150,10 +150,7 @@
   [game-state]
   (update game-state ::gs/score
           #(cond-> %
-             (player-on? :fruit game-state) inc
-             (player-on? :cheese game-state) (- 10)
-             (enemy-encountered-index? game-state) (- 10)
-             (level-finished? game-state) (+ 20))))
+             (player-on? :fruit game-state) inc)))
 
 (defn- reset-enemy-position
   "After having struck the player, an enemy reappears at a large
@@ -171,10 +168,9 @@
 (defn- update-status [{:as game-state :keys [::gs/score ::gb/game-board]}]
   (assoc game-state ::gs/status 
          (cond
-           (level-finished? game-state)
-           :won
-
-           (neg? score) :over
+           (level-finished? game-state) :won
+           (enemy-encountered-index? game-state) :over
+           (player-on? :cheese game-state) :over
            :else :active)))
 
 (defn- clean-board

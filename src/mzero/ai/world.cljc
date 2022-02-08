@@ -10,6 +10,7 @@
   a detailed execution history."
   (:require [mzero.game.events :as ge]
             [mzero.game.state :as gs]
+            [mzero.game.board :as gb]
             [mzero.utils.commons :as c]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
@@ -107,6 +108,12 @@
 
 (defn remaining-levels? [world] (seq (-> world ::next-levels)))
 
+(defn current-level-nb [world]
+  (- (or (:nb-of-levels world) 1) (count (::next-levels world))))
+
+(defn level-finished-bonus [world]
+  (* (current-level-nb world) (count (-> world ::gs/game-state ::gb/game-board))))
+
 (defn update-to-next-level
   [{:as world :keys [::gs/game-state ::next-levels]}]
   (cond-> world
@@ -117,11 +124,19 @@
            ::next-levels (rest next-levels))))
 
 (defn update-score-given-status
-  [{:as world :keys [::gs/game-state ::recorded-score]}]
-  (case (-> world ::gs/game-state ::gs/status)
-    :won (assoc world ::recorded-score (-> game-state ::gs/score))
-    :over (assoc-in world [::gs/game-state ::gs/score] recorded-score)
-    world))
+  [{:as world :keys [::recorded-score]}]
+  (let [record-score
+        #(assoc % ::recorded-score (-> % ::gs/game-state ::gs/score))]
+    (case (-> world ::gs/game-state ::gs/status)
+      :won
+      (-> world
+          (update-in [::gs/game-state ::gs/score] + (level-finished-bonus world))
+          record-score)
+
+      :over
+      (assoc-in world [::gs/game-state ::gs/score] recorded-score)
+
+      world)))
 
 (defn compute-new-state
   "Compute the new state derived from running a step of the
@@ -164,4 +179,5 @@
         generate-level
         (fn [s l] (first (gg/generate-game-states 1 size s true l)))]
     (-> (world size seed true level)
-        (assoc ::next-levels (map generate-level seeds levels)))))
+        (assoc ::next-levels (map generate-level seeds levels)
+               :nb-of-levels (inc (count levels))))))

@@ -55,9 +55,9 @@
               (assoc ::aiw/requested-movements {1 :left 0 :up :player :right})
               (aiw/compute-new-state))]
       (is (= (-> winning-state-1 ::gs/game-state ::gs/status) :won))
-      (is (== (-> winning-state-1 ::aiw/recorded-score) 1))
+      (is (== (-> winning-state-1 ::aiw/recorded-score) (+ 1 5))) ;; winning level bonus
       (is (= (-> winning-state-2 ::gs/game-state ::gs/status) :won))
-      (is (== (-> winning-state-2 ::aiw/recorded-score) 1))
+      (is (== (-> winning-state-2 ::aiw/recorded-score) (+ 5 1))) 
       (is (= (-> losing-state-1 ::gs/game-state ::gs/status) :over))
       (is (== (-> losing-state-1 ::gs/game-state ::gs/score) 0))
       (is (= (-> losing-state-2 ::gs/game-state ::gs/status) :over))
