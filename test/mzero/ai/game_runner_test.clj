@@ -5,6 +5,3 @@
 
 (deftest run-test-basic-monothreadrunner
   (basic-run "MonoThreadRunner"))
-
-(deftest run-test-basic-watcherrunner
-  (basic-run "WatcherRunner"))

@@ -61,26 +61,3 @@
           :until-end (recur nil) ;; nil means never stop running
           :until-no-steps (recur (dec nb-steps)))))))
 
-(defrecord WatcherRunner [world-state player-state opts]
-  GameRunner
-  (run-game [{:keys [world-state player-state opts]}]
-    (let [remaining-steps (remaining-steps-fn @world-state opts)]
-
-      ;; every time a movement is requested, run a world step
-      ;; conversely, every time a movement is executed, request a new one
-      (add-watch
-       world-state :run-world
-       (fn [_ _ _ new-st]
-         (when (game-should-continue new-st (remaining-steps new-st))
-           (if (-> new-st ::aiw/requested-movements :player)
-             (do (aiw/run-step world-state (opts :logging-steps))
-                 (move-to-next-level-if-needed world-state))
-             (aip/request-movement player-state world-state)))))
-      
-      ;; if nothing moves during 1 ms, e.g. because the player
-      ;; requested a nil movement, then request a new movement
-      (while (game-should-continue @world-state (remaining-steps @world-state))
-        (let [last-step (-> @world-state ::aiw/game-step)]
-          (Thread/sleep 1)
-          (when (= (-> @world-state ::aiw/game-step) last-step)
-            (aip/request-movement player-state world-state)))))))
