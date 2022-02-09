@@ -54,6 +54,7 @@
   (run-game [{:keys [world-state player-state opts]}]
     (loop [nb-steps (when-let [s (opts :number-of-steps)] (dec s))] 
       (aip/request-movement player-state world-state)
+      (aiw/request-enemies-movements! world-state)
       (aiw/run-step world-state (opts :logging-steps))
       (move-to-next-level-if-needed world-state)
       (when-let [game-status (game-should-continue @world-state nb-steps)]

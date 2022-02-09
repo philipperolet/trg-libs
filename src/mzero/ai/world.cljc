@@ -33,6 +33,9 @@
                               :max-count gg/max-levels
                               :gen #(gen/vector (s/gen ::gs/game-state) 0 2)))
 
+(s/def ::levels-data (s/every ::gg/level))
+(s/def ::current-level-start-step nat-int?)
+
 (defn- world-state-predicate-matcher
   "Generator helper to match ::world-state constraints"
   [world-state]
@@ -83,7 +86,8 @@
    {::gs/game-state (assoc game-state ::gs/status :active)
     ::game-step 0
     ::requested-movements {}
-    ::step-timestamp initial-timestamp})
+    ::step-timestamp initial-timestamp
+    ::current-level-start-step 0})
   ([game-state] (new-world game-state (c/currTimeMillis))))
 
 (def ^:deprecated get-initial-world-state new-world)
@@ -105,19 +109,20 @@
 (defn remaining-levels? [world] (seq (-> world ::next-levels)))
 
 (defn current-level-nb [world]
-  (- (or (:nb-of-levels world) 1) (count (::next-levels world))))
+  (- (count (or (::levels-data world) "1")) (count (::next-levels world))))
 
 (defn level-finished-bonus [world]
   (* (current-level-nb world) (count (-> world ::gs/game-state ::gb/game-board))))
 
 (defn update-to-next-level
-  [{:as world :keys [::gs/game-state ::next-levels]}]
+  [{:as world :keys [::gs/game-state ::next-levels ::game-step]}]
   (cond-> world
     (and (= (-> game-state ::gs/status) :won) (remaining-levels? world))
     (assoc ::gs/game-state (assoc (first next-levels)
                                   ::gs/status :active
                                   ::gs/score (-> game-state ::gs/score))
-           ::next-levels (rest next-levels))))
+           ::next-levels (rest next-levels)
+           ::current-level-start-step game-step)))
 
 (defn update-score-given-status
   [world]
@@ -152,6 +157,44 @@
     (#?(:clj log/warnf :cljs (constantly nil))
      (data->string @world-state-atom))))
 
+
+(def enemies-wait-delay 50)
+
+(def enemy-move-interval {:drink 8 :mouse 4 :virus 2})
+
+(def slower-enemy-move-interval
+  (reduce #(update %1 %2 * 5) enemy-move-interval (keys enemy-move-interval)))
+
+(defn- indices-of-enemies-to-move
+  ([game-step level-start-step enemies]
+   (let [enemies-waited-enough? ;; at start of level, wait for a bit before moving
+        (>= game-step (+ enemies-wait-delay level-start-step))
+        index-of-enemy-to-move
+        (fn [enemy-index enemy-type]
+          (when (and enemies-waited-enough?
+                     (= 0 (mod game-step (slower-enemy-move-interval enemy-type))))
+            enemy-index))]
+     (keep-indexed index-of-enemy-to-move enemies)))
+  ([{:as world :keys [::game-step ::current-level-start-step]}]
+   (let [enemies
+         (-> world ::levels-data (nth (dec (current-level-nb world))) :enemies)]
+     (indices-of-enemies-to-move game-step current-level-start-step enemies))))
+
+(defn request-enemies-movements [{:as world :keys [::game-state]}]
+  (let [request-enemy-movement
+        (fn [requested-movements index]
+          (assoc requested-movements index
+                 (ge/move-enemy-random game-state index)))]
+    (update world ::requested-movements
+            (partial reduce request-enemy-movement)
+            (indices-of-enemies-to-move world))))
+
+(defn request-enemies-movements! [world-atom]
+  (let [enemies-present?
+        (-> @world-atom ::gs/game-state ::gs/enemy-positions count (> 0))]
+    (when enemies-present?
+      (swap! world-atom request-enemies-movements))))
+
 (defn world
   "Get a world given board `size`, and `seed`"
   [size seed & args]
@@ -159,12 +202,13 @@
    (first (apply gg/generate-game-states 1 size seed args))))
 
 (defn multilevel-world
-  [size seed [level & levels]]
+  [size seed [first-level & next-levels :as levels]]
   (let [seeds
         (binding [g/*rnd* (c/get-rng seed)]
           (vec (repeatedly (count levels) g/int)))
         generate-level
         (fn [s l] (first (gg/generate-game-states 1 size s true l)))]
-    (-> (world size seed true level)
-        (assoc ::next-levels (map generate-level seeds levels)
-               :nb-of-levels (inc (count levels))))))
+    (-> (world size seed true first-level)
+        (assoc ::next-levels (map generate-level seeds next-levels)
+               ::levels-data  levels
+               ::current-level-start-step 0))))

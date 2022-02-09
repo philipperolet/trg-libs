@@ -24,7 +24,8 @@
                (aiw/compute-new-state)
                (assoc ::aiw/requested-movements {:player :down 0 :up 1 :right})
                (aiw/compute-new-state)
-               (dissoc ::aiw/missteps ::aiw/step-timestamp ::aiw/time-to-wait))
+               (dissoc ::aiw/missteps ::aiw/step-timestamp ::aiw/time-to-wait
+                       ::aiw/current-level-start-step))
            {::aiw/requested-movements {}
             ::aiw/game-step 2
             ::gs/game-state (-> test-state
