@@ -21,8 +21,7 @@
   is not empty, `game-state` has *not* been updated with those
   movements."
   (:require [mzero.ai.player :as aip]
-            [mzero.ai.world :as aiw]
-            [mzero.game.state :as gs]))
+            [mzero.ai.world :as aiw]))
 
 (defprotocol GameRunner
   (run-game [runner]))
@@ -33,7 +32,7 @@
   number of remaining steps."
   [world remaining-steps]
   (cond
-    (Thread/interrupted) false
+    #?(:clj (Thread/interrupted)) #?(:clj false)
     (not (aiw/active? world)) false
     (nil? remaining-steps) :until-end
     (pos? remaining-steps) :until-no-steps
