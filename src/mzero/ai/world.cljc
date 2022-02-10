@@ -108,11 +108,11 @@
 
 (defn remaining-levels? [world] (seq (-> world ::next-levels)))
 
-(defn current-level-nb [world]
-  (- (count (or (::levels-data world) "1")) (count (::next-levels world))))
+(defn current-level [world]
+  (- (count (or (::levels-data world) "1")) (inc (count (::next-levels world)))))
 
 (defn level-finished-bonus [world]
-  (* (current-level-nb world) (count (-> world ::gs/game-state ::gb/game-board))))
+  (* (current-level world) (count (-> world ::gs/game-state ::gb/game-board))))
 
 (defn update-to-next-level
   [{:as world :keys [::gs/game-state ::next-levels ::game-step]}]
@@ -177,10 +177,10 @@
      (keep-indexed index-of-enemy-to-move enemies)))
   ([{:as world :keys [::game-step ::current-level-start-step]}]
    (let [enemies
-         (-> world ::levels-data (nth (dec (current-level-nb world))) :enemies)]
+         (-> world ::levels-data (nth (current-level world)) :enemies)]
      (indices-of-enemies-to-move game-step current-level-start-step enemies))))
 
-(defn request-enemies-movements [{:as world :keys [::game-state]}]
+(defn request-enemies-movements [{:as world :keys [::gs/game-state]}]
   (let [request-enemy-movement
         (fn [requested-movements index]
           (assoc requested-movements index

@@ -4,7 +4,7 @@
   - `load-player` to load a player given its string name,
   with a seeding option."
   (:require [mzero.ai.world :as aiw]
-            [mzero.utils.commons :as c]))
+            #?(:clj [mzero.utils.utils :as u])))
 
 (defprotocol Player
   "A Player updates its state every time it needs via `update-player`.
@@ -62,6 +62,7 @@
   `opts` may contain `:seed` in which case the player will be
   initialized with a field `:rng` (random number generator)"
   [player-type opts world]
-  (-> (c/load-impl player-type "mzero.ai.players" "Player")
+  #?(:cljc (throw (js/Error. "load-player not implemented for CLJS")))
+  (-> (#?(:clj u/load-impl :cljc nil) player-type "mzero.ai.players" "Player")
       (seed-player opts) ;; seed before init (in case init needs seeding
       (init-player opts world)))

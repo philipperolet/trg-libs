@@ -4,7 +4,8 @@
             [mzero.game.state :as gs]
             [mzero.game.board :as gb]
             [mzero.game.state-test :as gst]
-            [mzero.ai.world :as aiw]))
+            [mzero.ai.world :as aiw]
+            [mzero.game.generation :as gg]))
 
 (check-all-specs mzero.ai.world)
 
@@ -62,3 +63,20 @@
       (is (== (-> losing-state-1 ::gs/game-state ::gs/score) 0))
       (is (= (-> losing-state-2 ::gs/game-state ::gs/status) :over))
       (is (== (-> losing-state-2 ::gs/game-state ::gs/score) 0)))))
+
+(deftest indices-of-enemies-to-move
+  (are [game-step start-step enemies indices]
+      (= (#'aiw/indices-of-enemies-to-move game-step start-step enemies) indices)
+    60 0 [:drink :mouse :mouse :drink] [1 2]
+    120 50 [:drink :mouse :virus] [0 1 2]
+    40 0 [:virus :virus] []
+    111 0 [:drink :mouse :virus] []))
+
+(deftest request-enemies-movements
+  (let [world
+        (-> (aiw/multilevel-world 15 15
+                                  [{::gg/density-map {:fruit 5}
+                                    :enemies [:drink :virus :mouse]}])
+            (assoc ::aiw/game-step 120)
+            aiw/request-enemies-movements)]
+    (is (= (keys (-> world ::aiw/requested-movements)) [0 1 2]))))
