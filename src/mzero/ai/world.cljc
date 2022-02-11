@@ -70,7 +70,7 @@
   [{:keys [::gs/game-state ::game-step ::step-timestamp]}]
   (str (format "Step %d\nScore %.2f\nTimestamp (mod 1 000 000) %d"
                game-step
-               (game-state ::gs/score)
+               (double (game-state ::gs/score))
                (mod step-timestamp 1000000))
        (gs/state->string game-state)))
 
