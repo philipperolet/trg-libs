@@ -18,7 +18,7 @@
   (testing "Gets full score in less than 200 steps on a small board")
   (let [game-run
           (aim/run (aim/parse-run-args "-S 26 -s 15 -n 200 -t simulator"))]
-      (is (== (-> game-run :world ::gs/game-state ::gs/score) 42))
+      (is (== (-> game-run :world ::gs/game-state ::gs/score) 27))
       (is (< (-> game-run :world ::aiw/game-step) 200))))
 
 (deftest simulator-run-speed

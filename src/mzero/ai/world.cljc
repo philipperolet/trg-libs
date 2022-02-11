@@ -158,7 +158,7 @@
      (data->string @world-state-atom))))
 
 
-(def enemies-wait-delay 50)
+(def enemies-wait-delay 15)
 
 (def enemy-move-interval {:drink 8 :mouse 4 :virus 2})
 
