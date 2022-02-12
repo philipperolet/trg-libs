@@ -172,7 +172,7 @@
         index-of-enemy-to-move
         (fn [enemy-index enemy-type]
           (when (and enemies-waited-enough?
-                     (= 0 (mod game-step (slower-enemy-move-interval enemy-type))))
+                     (= 0 (mod game-step (enemy-move-interval enemy-type))))
             enemy-index))]
      (keep-indexed index-of-enemy-to-move enemies)))
   ([{:as world :keys [::game-step ::current-level-start-step]}]
