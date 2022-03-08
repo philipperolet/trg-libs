@@ -1,6 +1,5 @@
 (ns mzero.ai.players.dumbot
-  "Player moving directly towards fruits and avoiding cheeses using a
-  simple bellman iteration."
+  "Player moving directly towards fruits and avoiding cheeses"
   (:require [mzero.ai.player :refer [Player]]
             [mzero.game.events :as ge]
             [mzero.game.state :as gs]
@@ -37,7 +36,7 @@
             (vec (map-indexed (partial directionize-cell index) row)))]
     (vec (map-indexed directionize-row game-board))))
 
-(defn- find-fastest-direction [game-board player-position]
+(defn find-fastest-direction [game-board player-position]
   (let [fastest-direction (get-in game-board player-position)]
     (if (s/valid? ::ge/direction fastest-direction)
       fastest-direction
