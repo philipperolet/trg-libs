@@ -158,12 +158,9 @@
      (data->string @world-state-atom))))
 
 
-(def enemies-wait-delay 15)
+(def enemies-wait-delay 10)
 
-(def enemy-move-interval {:drink 8 :mouse 4 :virus 2})
-
-(def slower-enemy-move-interval
-  (reduce #(update %1 %2 * 5) enemy-move-interval (keys enemy-move-interval)))
+(def enemy-move-interval {:drink 4 :mouse 2 :virus 1})
 
 (defn- indices-of-enemies-to-move
   ([game-step level-start-step enemies]

@@ -106,8 +106,18 @@
                   player-position
                   (enemy-positions enemy-index)))
         distance (reduce #(+ (abs %1) (abs %2)) distances)
-        vertical-favor (if (pos? (distances 0)) [:down :down] (if (= 0 (distances 0)) [] [:up :up]))
-        horizontal-favor (if (pos? (distances 1)) [:right :right] (if (= 0 (distances 1)) [] [:left :left]))
+        vertical-favor
+        (if (pos? (distances 0))
+          (vec (repeat 5 :down))
+          (if (= 0 (distances 0))
+            []
+            (vec (repeat 5 :up))))
+        horizontal-favor
+        (if (pos? (distances 1))
+          (vec (repeat 5 :right))
+          (if (= 0 (distances 1))
+            []
+            (vec (repeat 5 :left))))
         total-favor (into vertical-favor horizontal-favor)
         final-favor (if (< distance 4) (into total-favor total-favor) total-favor)
         random-direction
