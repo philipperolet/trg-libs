@@ -80,7 +80,9 @@
       (dissoc :saved-board)))
 
 (defn switch-controls [world]
-  (update-in world [::aiw/requested-movements :player] ge/opposed-direction))
+  (cond-> world
+    (contains? (-> world ::aiw/requested-movements) :player)
+    (update-in [::aiw/requested-movements :player] ge/opposed-direction)))
 
 (defn update-with-momentum-rule
   [world]
