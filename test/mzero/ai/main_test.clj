@@ -64,7 +64,7 @@
           end-world-state
           (:world (aim/run (aim/parse-run-args "-t random") test-world))]
       (is (= 2 (-> test-world ::aiw/next-levels count)))
-      (is (== (+ 15 (* 12 6)) ;; end level bonus
+      (is (== (+ 15 (* 12 3)) ;; end level bonus
              (-> end-world-state ::gs/game-state ::gs/score)))
       (is (= :won (-> end-world-state ::gs/game-state ::gs/status)))
       (is (= 0 (-> end-world-state ::aiw/next-levels count))))))

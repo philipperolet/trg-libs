@@ -56,9 +56,9 @@
               (assoc ::aiw/requested-movements {1 :left 0 :up :player :right})
               (aiw/compute-new-state))]
       (is (= (-> winning-state-1 ::gs/game-state ::gs/status) :won))
-      (is (== (-> winning-state-1 ::gs/game-state ::gs/score) (+ 1 5))) ;; winning level bonus
+      (is (== (-> winning-state-1 ::gs/game-state ::gs/score) (+ 1 0))) ;; winning level bonus
       (is (= (-> winning-state-2 ::gs/game-state ::gs/status) :won))
-      (is (== (-> winning-state-2 ::gs/game-state ::gs/score) (+ 5 1))) 
+      (is (== (-> winning-state-2 ::gs/game-state ::gs/score) (+ 0 1))) 
       (is (= (-> losing-state-1 ::gs/game-state ::gs/status) :over))
       (is (== (-> losing-state-1 ::gs/game-state ::gs/score) 0))
       (is (= (-> losing-state-2 ::gs/game-state ::gs/status) :over))
@@ -67,10 +67,10 @@
 (deftest indices-of-enemies-to-move
   (are [game-step start-step enemies indices]
       (= (#'aiw/indices-of-enemies-to-move game-step start-step enemies) indices)
-    60 0 [:drink :mouse :mouse :drink] [1 2]
+    58 0 [:drink :mouse :mouse :drink] [1 2]
     120 50 [:drink :mouse :virus] [0 1 2]
-    40 0 [:virus :virus] []
-    111 0 [:drink :mouse :virus] []))
+    40 0 [:virus :virus] [0 1]
+    111 0 [:drink :mouse :virus] [2]))
 
 (deftest request-enemies-movements
   (let [world
