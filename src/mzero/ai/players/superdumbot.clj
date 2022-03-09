@@ -4,7 +4,8 @@
             [mzero.game.events :as ge]
             [mzero.game.state :as gs]
             [mzero.game.board :as gb]
-            [mzero.ai.players.dumbot :refer [find-fastest-direction]]))
+            [mzero.ai.players.dumbot :refer [find-fastest-direction]]
+            [clojure.data.generators :as g]))
 
 (defn flee-enemies [enemy-positions player-position game-board]
   (let [board-size (count game-board)
@@ -55,4 +56,4 @@
       (assoc player :next-movement
              (if (some #{fruit-direction} flee-directions)
                fruit-direction
-               (or (rand-nth flee-directions) fruit-direction))))))
+               (or (g/rand-nth flee-directions) fruit-direction))))))
