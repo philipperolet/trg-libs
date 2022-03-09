@@ -4,7 +4,8 @@
             [mzero.game.events :as ge]
             [mzero.game.state :as gs]
             [mzero.game.board :as gb]
-            [clojure.spec.alpha :as s]))
+            [clojure.spec.alpha :as s]
+            [clojure.data.generators :as g]))
 
 (defn- adjacent-cells [cell-position board-size]
   (zipmap ge/directions
@@ -36,11 +37,22 @@
             (vec (map-indexed (partial directionize-cell index) row)))]
     (vec (map-indexed directionize-row game-board))))
 
-(defn find-fastest-direction [game-board player-position]
-  (let [fastest-direction (get-in game-board player-position)]
-    (if (s/valid? ::ge/direction fastest-direction)
-      fastest-direction
-      (recur (directionize-board game-board) player-position))))
+(defn find-fastest-direction
+  ([game-board player-position remaining-tries]
+   (let [fastest-direction (get-in game-board player-position)]
+     (cond
+       (s/valid? ::ge/direction fastest-direction)
+       fastest-direction
+       
+       (= 0 remaining-tries)
+       (g/rand-nth ge/directions)
+
+       :else
+       (recur (directionize-board game-board)
+              player-position
+              (dec remaining-tries)))))
+  ([game-board player-position]
+   (find-fastest-direction game-board player-position (* 4 (count game-board)))))
 
 (defrecord DumbotPlayer []
   Player
