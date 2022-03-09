@@ -191,7 +191,7 @@
 (s/def ::level (s/keys
                 :req [::density-map]
                 :opt [::wall-density]
-                :opt-unq [:enemies :message :message-color]))
+                :opt-unq [:enemies :message :message-color :rules]))
 
 (s/fdef create-nice-board
   :args (-> (s/alt :unseeded

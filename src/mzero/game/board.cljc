@@ -11,7 +11,7 @@
 
 (s/def ::board-size (s/int-in min-board-size max-board-size))
 
-(defonce game-cell-values #{:empty :wall :fruit :cheese})
+(defonce game-cell-values #{:empty :wall :fruit :cheese :hidden})
 
 (s/def ::game-cell game-cell-values)
 
@@ -48,11 +48,11 @@
 
       (s/and (fn [gb] (comment "lines and rows have same size")
                (every? #(= (count %) (count gb)) gb))
-             (fn [gb] (comment "At least 2 empty cells")
+             (fn [gb] (comment "At least 2 empty or hidden cells")
                ;; counts cells without using  the funcion count-cells
                ;; to avoid cyclic reference since count-cells spec
                ;; relies on ::game-board
-               (< 1 (->> gb (reduce into) (filter #(= % :empty)) count)))
+               (< 1 (->> gb (reduce into) (filter #{:empty :hidden}) count)))
              (fn [gb]
                (comment "Avoid weird boards full of walls")
                (< (count-cells gb :wall) (* (count gb) (count gb) max-wall-density))))

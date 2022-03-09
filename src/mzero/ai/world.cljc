@@ -192,6 +192,11 @@
     (when enemies-present?
       (swap! world-atom request-enemies-movements))))
 
+(defn level-rules [world rule-name]
+  (and (::levels-data world)
+       (some #{rule-name}
+             (:rules (nth (::levels-data world) (current-level world))))))
+
 (defn world
   "Get a world given board `size`, and `seed`"
   [size seed & args]

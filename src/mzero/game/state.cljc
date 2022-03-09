@@ -249,6 +249,7 @@
    :fruit \o
    :cheese \x
    :wall \#
+   :hidden \8
    :newline \newline})
 
 (defn state->string

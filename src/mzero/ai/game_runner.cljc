@@ -21,7 +21,10 @@
   is not empty, `game-state` has *not* been updated with those
   movements."
   (:require [mzero.ai.player :as aip]
-            [mzero.ai.world :as aiw]))
+            [mzero.ai.world :as aiw]
+            [mzero.game.state :as gs]
+            [mzero.game.board :as gb]
+            [mzero.game.events :as ge]))
 
 (defprotocol GameRunner
   (run-game [runner]))
@@ -48,11 +51,43 @@
 (defn move-to-next-level-if-needed [world-atom]
   (swap! world-atom aiw/update-to-next-level))
 
+(def default-view-size 5)
+(defn add-fog-to-board
+  ([game-board [player-row player-col] clear-view-size]
+   (let [distance (fn [x y] (ge/abs (ge/compute-distance x y (count game-board))))
+         add-fog-to-cell
+         (fn [cell-row cell-col cell-val]
+           (if (and (<= (distance player-row cell-row) clear-view-size)
+                    (<= (distance player-col cell-col) clear-view-size))
+             cell-val
+             :hidden))
+         add-fog-to-row
+         (fn [idx row]
+           (vec (map-indexed #(add-fog-to-cell idx %1 %2) row)))]
+     (vec (map-indexed add-fog-to-row game-board))))
+  ([game-board position] (add-fog-to-board game-board position default-view-size)))
+
+(defn add-fog
+  [{:as world {:keys [::gs/player-position ::gb/game-board]} ::gs/game-state}]
+  (-> world
+      (assoc :saved-board game-board)
+      (update-in [::gs/game-state ::gb/game-board]
+                 add-fog-to-board player-position)))
+
+(defn remove-fog [{:as world :keys [saved-board]}]
+  (-> world
+      (assoc-in [::gs/game-state ::gb/game-board] saved-board)
+      (dissoc :saved-board)))
+
 (defrecord MonoThreadRunner [world-state player-state opts]
   GameRunner
   (run-game [{:keys [world-state player-state opts]}]
-    (loop [nb-steps (when-let [s (opts :number-of-steps)] (dec s))] 
+    (loop [nb-steps (when-let [s (opts :number-of-steps)] (dec s))]
+      (when (aiw/level-rules :fog-of-war @world-state)
+        (swap! world-state add-fog))
       (aip/request-movement player-state world-state)
+      (when (aiw/level-rules :fog-of-war @world-state)
+        (swap! world-state remove-fog))
       (aiw/request-enemies-movements! world-state)
       (aiw/run-step world-state (opts :logging-steps))
       (move-to-next-level-if-needed world-state)
