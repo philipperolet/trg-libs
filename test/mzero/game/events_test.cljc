@@ -102,4 +102,11 @@
       (is (every? #(= % :empty) (subvec fruit-row 0 3)))
       (is (== 6 (fruits-eaten-state ::gs/score))))))
 
-    
+(deftest compute-distance-test
+  (are [x y d v] (= (ge/compute-distance x y d) v)
+    1 1 10 0
+    9 9 23 0
+    1 9 10 2
+    9 1 10 -2
+    1 3 10 -2
+    3 1 10 2))
