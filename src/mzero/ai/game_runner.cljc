@@ -79,16 +79,22 @@
       (assoc-in [::gs/game-state ::gb/game-board] saved-board)
       (dissoc :saved-board)))
 
+(defn switch-controls [world]
+  (let [opposed-direction {:up :down :down :up :left :right :right :left}]
+    (update-in world [::aiw/requested-movements :player] opposed-direction)))
+
 (defrecord MonoThreadRunner [world-state player-state opts]
   GameRunner
   (run-game [{:keys [world-state player-state opts]}]
     (loop [nb-steps (when-let [s (opts :number-of-steps)] (dec s))]
-      (when (aiw/level-rules :fog-of-war @world-state)
+      (when (aiw/level-rules @world-state :fog-of-war)
         (swap! world-state add-fog))
       (aip/request-movement player-state world-state)
-      (when (aiw/level-rules :fog-of-war @world-state)
+      (when (aiw/level-rules @world-state :fog-of-war)
         (swap! world-state remove-fog))
       (aiw/request-enemies-movements! world-state)
+      (when (aiw/level-rules @world-state :controls-switch)
+        (swap! world-state switch-controls))
       (aiw/run-step world-state (opts :logging-steps))
       (move-to-next-level-if-needed world-state)
       (when-let [game-status (game-should-continue @world-state nb-steps)]
