@@ -71,8 +71,9 @@
 (s/def ::game-state
   (-> ::transient-game-state
       (s/and
-       (fn [s] (comment "player should be on empty space")
-           (= (-> s ::gb/game-board (get-in (::player-position s))) :empty))
+       (fn [s] (comment "player should be on empty space or fruit")
+         (or (= (-> s ::gb/game-board (get-in (::player-position s))) :empty)
+             (= (-> s ::gb/game-board (get-in (::player-position s))) :fruit)))
        (fn [{:keys [::player-position ::enemy-positions ::status]}]
          (comment "Game over if player and enemy on same position,
            except if game is won")

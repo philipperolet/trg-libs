@@ -13,6 +13,8 @@
 ;;;;;;;
 (def directions [:up :right :down :left])
 
+(def opposed-direction {:up :down :down :up :left :right :right :left})
+
 (s/def ::direction (set directions))
 
 (s/def ::being (s/or :player #{:player}
@@ -156,11 +158,32 @@
   (and (player-on? :fruit game-state)
        (= 1 (gb/count-cells game-board :fruit)))) ;; last fruit to be eaten
 
+(defn- momentum-impossible?
+  "momentum is not possible if there is a cheese or a wall"
+  [player-position last-move game-board]
+  (let [momentum-position
+        (-> player-position
+            (move-position (opposed-direction last-move) (count game-board))
+            (move-position (opposed-direction last-move) (count game-board)))
+        momentum-cell (get-in game-board momentum-position)]
+    (or (= momentum-cell :cheese) (= momentum-cell :wall))))
+
+(defn player-can-eat?
+  [{:as game-state :keys [momentum-rule ::gs/player-position ::gb/game-board]}]
+  (let [{:keys [last-move before-last-move]} momentum-rule
+        player-has-momentum?
+        ;;  the player has momentum when it went at least twice in the same direction
+        (= last-move before-last-move)]
+    (or (not momentum-rule)
+        (momentum-impossible? player-position last-move game-board) 
+        player-has-momentum?)))
+
 (defn- update-score
   [game-state]
   (update game-state ::gs/score
           #(cond-> %
-             (player-on? :fruit game-state) inc)))
+             (and (player-on? :fruit game-state) (player-can-eat? game-state))
+             inc)))
 
 (defn- reset-enemy-position
   "After having struck the player, an enemy reappears at a large
@@ -187,7 +210,8 @@
   [{:as game-state :keys [::gs/player-position ::gb/game-board]}]
   (let [enemy-encountered-index (enemy-encountered-index? game-state)]
     (cond-> game-state
-      (or (player-on? :fruit game-state) (player-on? :cheese game-state))
+      (or (and (player-on? :fruit game-state) (player-can-eat? game-state))
+          (player-on? :cheese game-state))
       (assoc-in (into [::gb/game-board] player-position) :empty)
 
       enemy-encountered-index

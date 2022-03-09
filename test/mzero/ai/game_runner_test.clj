@@ -32,7 +32,7 @@
     (is (every? #{:hidden} (little-visible 4)))
     (is (not-every? #{:hidden} (little-visible 9)))))
 
-(deftest fogged-game-test
+(deftest fog-of-war-test
   (let [level
         {::gg/density-map {:fruit 5 :cheese 3}
          :rules [:fog-of-war]}
@@ -42,4 +42,12 @@
              :world
              (s/valid? ::aiw/world-state)))))
 
-
+(deftest weird-rule-test
+  (let [level
+        {::gg/density-map {:fruit 5 :cheese 3}
+         :rules [:momentum-rule]}
+        world
+        (aiw/multilevel-world 25 25 [level])]
+    (is (->> (aim/run (aim/parse-run-args "-t dumbot -n 100 -v WARNING") world)
+             :world
+             (s/valid? ::aiw/world-state)))))

@@ -80,8 +80,21 @@
       (dissoc :saved-board)))
 
 (defn switch-controls [world]
-  (let [opposed-direction {:up :down :down :up :left :right :right :left}]
-    (update-in world [::aiw/requested-movements :player] opposed-direction)))
+  (update-in world [::aiw/requested-movements :player] ge/opposed-direction))
+
+(defn update-with-momentum-rule
+  [world]
+  (let [player-movement
+        (get-in world [::aiw/requested-movements :player])
+        momentum-rule-update
+        (fn [{:as momentum-rule :keys [last-move]}]
+          (if player-movement
+            {:last-move player-movement
+             ;; moves in momentum-rule should not be nil ; if never moved
+             ;; yet, initialize
+             :before-last-move (or last-move :up)} 
+            momentum-rule))]
+    (update-in world [::gs/game-state :momentum-rule] momentum-rule-update)))
 
 (defrecord MonoThreadRunner [world-state player-state opts]
   GameRunner
@@ -95,6 +108,8 @@
       (aiw/request-enemies-movements! world-state)
       (when (aiw/level-rules @world-state :controls-switch)
         (swap! world-state switch-controls))
+      (when (aiw/level-rules @world-state :momentum-rule)
+        (swap! world-state update-with-momentum-rule))
       (aiw/run-step world-state (opts :logging-steps))
       (move-to-next-level-if-needed world-state)
       (when-let [game-status (game-should-continue @world-state nb-steps)]
