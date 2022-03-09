@@ -7,38 +7,42 @@
             [mzero.ai.players.dumbot :refer [find-fastest-direction]]
             [clojure.data.generators :as g]))
 
-(defn flee-enemies [enemy-positions player-position game-board]
-  (let [board-size (count game-board)
+(defn flee-enemies [enemy-positions player-position game-board fruit-direction]
+  (let [move-to
+        (fn [position direction]
+          (ge/move-position position direction (count game-board))) 
         enemy-in-direction?
         (fn [position direction]
-          (some #{(ge/move-position position direction board-size)}
-                enemy-positions))
-        wall-in-direction?
+          (some #{(move-to position direction)} enemy-positions))
+        obstacle-in-direction?
         (fn [position direction]
-          (= :wall
-             (get-in game-board (ge/move-position position direction board-size))))
+          (some #{(get-in game-board (move-to position direction))}
+                [:wall :cheese]))
         enemy-next-to-direction?
         (fn [position direction]
-          (let [new-position
-                (ge/move-position position direction board-size)]
+          (let [new-position (move-to position direction)]
             (some #(enemy-in-direction? new-position %) ge/directions)))
-        enemy-next2-to-direction?
-        (fn [position direction]
-          (let [new-position
-                (ge/move-position position direction board-size)]
-            (some #(enemy-next-to-direction? new-position %) ge/directions)))
         okay-directions
         (->> ge/directions
-             (remove #(enemy-in-direction? player-position %))
-             (remove #(wall-in-direction? player-position %)))
+             (remove #(enemy-in-direction? player-position %)))
         good-directions
         (remove #(enemy-next-to-direction? player-position %) okay-directions)
-        very-good-directions good-directions]
-    (if (empty? very-good-directions)
-      (if (empty? good-directions)
-        okay-directions
-        good-directions)
-      very-good-directions)))
+        okay-directions-wo-obstacle
+        (remove #(obstacle-in-direction? player-position %) okay-directions)
+        good-directions-wo-obstacle
+        (remove #(obstacle-in-direction? player-position %) good-directions)]
+    (cond
+      (= 4 (count good-directions)) ;; no enemy in sight
+      fruit-direction
+
+      (empty? okay-directions-wo-obstacle) ;; i am dead
+      (g/rand-nth ge/directions)
+
+      (empty? good-directions-wo-obstacle)
+      (g/rand-nth okay-directions-wo-obstacle)
+
+      :else
+      (g/rand-nth good-directions-wo-obstacle))))
 
 (defrecord SuperdumbotPlayer []
   Player
@@ -49,11 +53,7 @@
      {:as world
       {:keys [::gs/player-position ::gb/game-board ::gs/enemy-positions]}
       ::gs/game-state}]
-    (let [flee-directions
-          (flee-enemies enemy-positions player-position game-board)
-          fruit-direction
+    (let [fruit-direction
           (find-fastest-direction game-board player-position)]
       (assoc player :next-movement
-             (if (some #{fruit-direction} flee-directions)
-               fruit-direction
-               (or (g/rand-nth flee-directions) fruit-direction))))))
+             (flee-enemies enemy-positions player-position game-board fruit-direction)))))
