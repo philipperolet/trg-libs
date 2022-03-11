@@ -24,7 +24,7 @@
       :empty
       (first possible-directions))))
 
-(defn- directionize-board
+(defn directionize-board
   "Any empty spot next to a fruit is marked with the direction to this
   fruit. Any empty spot next to a direction is marked with the
   direction to this direction. That's it folks"
