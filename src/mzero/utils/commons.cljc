@@ -34,23 +34,3 @@
             (java.util.Random. seed) (java.util.Random.))
      :cljs (js/console.warn "Call to get-rng with seed not implemented
      in javscript. Continuing with unseeded random")))
-
-(def z-95 1.96)
-(def z-90 1.645)
-
-(defn wilson-score
-  "Lower bound for a bernouilli RV given `m` successes on `n` trials,
-  defaulting to 0.95 (so z=-1.96)"
-  ([m n z]
-   (let [hat-p (/ (float m) n)
-         dividend-2 (* z z 0.5 (/ n))
-         dividend-3 (* z (Math/sqrt (+ (/ (* hat-p (- 1 hat-p)) n) (* z z 0.25 (/ n) (/ n)) )))
-         divisor (inc (/ (* z z) n))]
-     (/ (+ hat-p dividend-2 dividend-3) divisor)))
-  ([m n]
-   (wilson-score m n (- z-90))))
-
-(defn agresti [m n]
-  (let [z z-90
-        hat-p (/ (+ m (* 0.5 z z)) (+ n (* z z)))]
-    (- hat-p (* z (Math/sqrt (/ (* hat-p (- 1 hat-p)) (+ n (* z z))))))))
