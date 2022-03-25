@@ -1,83 +1,58 @@
-# Mzero-game
+# The Rabbit Game (libs)
 
-The Mzero Game (also called Lapyrinthe) is a simple game involving a rabbit eating fruits in a maze, avoiding unpasteurized cheese, moving drinks and viruses, with 6 randomly-generated levels to clear.
+### [The Rabbit Game](https://game.machine-zero.com) - A game cute for humans and tough for AIs
 
+Discover various kinds of artificial intelligence algorithms by watching them play a simple game: a rabbit eating strawberries in a maze (humans can play too 😉). Play it [here](https://game.machine-zero.com).
 
-The game can be played here : [game.machine-zero.com](https://game.machine-zero.com). Click on the big red question mark to start the game.
+**Note**: The game was tested on Chrome (& chromium-based) and firefox browsers; it is not yet mobile compliant unfortunately.
 
-**Note**: GUI tested on chromium-based and firefox browsers, **not** mobile compliant.
+This repository contains core libs for the game engine, along with a few artificial players and a CLI. All the frontend/backend for the game website can be found [here](https://github.com/philipperolet/the-rabbit-game). Deep-learning based players (work in progress) are [here](https://github.com/philipperolet/trg-players).
 
-### Gameplay
-Move the player with arrow keys, or e - d - s - f keys. Game starts at level 1; if the player clears all 6 predefined levels, they can see the ending.
+## Purpose
+The goal of The Rabbit Game is to demystify artificial intelligence
+   a little, by watching how machines play the game. But first, you
+   can play it a little yourself to see how it works, get a good score
+   and try all the various levels.
 
-The game starts getting hard at level 5.
+Then, you can let artificial intelligences play. Check out the
+    8 different artificial players; each has its own style determined
+    by its stats--its strong and weak points (click on a stat to see
+    what it means).
 
-### Edges
-The edges of the maze are connected together, they are not walls. Moving down from the last row will bring the player on top, and moving left from column 0 will bring the player to the rightmost column.
+Have different AIs play on different levels. Each new level
+   introduces something new that will make it tougher for AIs. See
+   which ones get far, which one fail, and why they behave like
+   this (click on \"Learn more about me\" to understand an AI's
+   behaviour).
 
-### Cheat codes
-Cheat codes allow to start directly at a given level, or to slow down the enemies, by adding the query string `?cheatlev=X&tick=Y` to the link above. 
+Additionnally, if you're a hacker, you can try to code an
+    algorithm to go to the highest possible level. If it clears the
+    last level, which is quite hard, you can win *a lot* of internet
+    points (really awful lot).
 
-X is the level (here counting from 0 instead of one, so between 0 and 5). Y is an indicator of the time between enemy moves, 100 is the default (e.g. 200 will make enemies move twice slower, 50 will make them move twice as fast).
-
-### Artificial players
-See below on how to create artificial players and have them play the game. Multiple artificial players have been implemented as baseline:
-
-- **random**, selecting a move randomly uniformly at each step;
-- **exhaustive**, trying every possible path on the maze in a breadth-first-search fashion;
-- **tree-exploration**, a rudimentary RL algorithm using monte-carlo tree search exploration to assess move values.
-
-# About the game
-
-This game was developed:
-
-- to learn about Clojure & Clojurescript;
-- to tell my friends in a fun way that we were expecting a child (born on 2020/11/11), thus all the references to strawberries, unpasteurized cheese and alcohol avoidance;
-- as a simple (at first) environment for training AI agents.
-
-### Relevance of the game to train AI agents
-Current AI RL algorithms could probably learn optimal strategies for the game very quickly. However, the game can straightforwardly be made arbitrarily complex:
-
-- by making sophisticated mazes where finding the fruits is difficult;
-- by adding rules simple to humans but hard to machines, that require some form of transfer learnign, symbolic reasoning, or abstract thought--lever that can make fruits appear in certain conditions, ability to destroy wall by performing specific move sequences, etc.;
-
-These are appropriate properties to research artificial agents learning abstractions, high level reasoning, complex planning & decision making, etc., especially to observe how they behave.
-
-In other simple games that have a narrow environment (e.g. cartpole), or in games that are already complex (e.g. modern videogames), it is tough to create new interesting rules for training agents. 
-
-### Naming
-Machine Zero is the name of my adventure to explore artificial intelligence. Lapyrinthe is a mix between Labyrinthe (french for maze) and Lapin (french for rabbit).
-
-# Usage
-
+Learn more about the story behind the game and why it's interesting for AI research [here](TODO)
+# Dev setup & usage 
 ## Requirements
 - Clojure 1.10.1 or above
 - Leiningen 2.7.1 or above
 
 Other requirements / dependencies will be installed by leiningen, see the [lein project file](project.clj)
 
-## Use on GUI
-The game can be played by human or artificial players via a ClojureScript GUI, see [mzero-game-gui](https://github.com/sittingbull/mzero-game-gui). 
-
-Human players can use the GUI directly here : [game.machine-zero.com](https://game.machine-zero.com). Click on the big red question mark to start the game.
-
-**Note**: GUI tested on chromium-based and firefox browsers, **not** mobile compliant.
-
-## Use on terminal
+## Run with CLI or REPL
 The game can be played by artificial players via a CLI or a REPL. 
 
 ### With CLI
 
 Sample run on board of edge size 27, with a 'tree-exploration' artificial player:
 ```
-git clone https://github.com/sittingbull/mzero-game.git
-cd mzero-game
+git clone https://github.com/philipperolet/trg-libs.git
+cd trg-libs
 lein run -- -t tree-exploration -s 27
 ```
 ### With REPL
 ```
-git clone https://github.com/sittingbull/mzero-game.git
-cd mzero-game
+git clone https://github.com/philipperolet/trg-libs.git
+cd trg-libs
 lein repl
 ```
 
@@ -115,6 +90,12 @@ See main.clj for more details.
 
 ## Creating and running artificial players
 Information to create a player implementation is [here](src/mzero/ai/player.clj)
+
+Multiple artificial players have been implemented as baseline, such as (non-exhaustive):
+
+- **random**, selecting a move randomly uniformly at each step;
+- **exhaustive**, trying every possible path on the maze in a breadth-first-search fashion;
+- **tree-exploration**, a rudimentary RL algorithm using monte-carlo tree search exploration to assess move values.
 
 # Code overview
 

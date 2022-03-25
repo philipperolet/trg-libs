@@ -1,4 +1,4 @@
-(defproject mzero-game "0.3.4"
+(defproject trg-libs "0.3.4"
   :description "A simple game of eating fruits in a maze, avoiding
   unpasteurized cheese and moving enemies. Implementations of various
   artificial algorithms to play this game (`players`)."
