@@ -30,7 +30,7 @@ Additionnally, if you're a hacker, you can try to code an
     last level, which is quite hard, you can win *a lot* of internet
     points (really awful lot).
 
-Learn more about the story behind the game and why it's interesting for AI research [here](TODO)
+Learn more about the story behind the game and why it's interesting for AI research [here](https://www.machine-zero.com/trg.html)
 # Dev setup & usage 
 ## Requirements
 - Clojure 1.10.1 or above
